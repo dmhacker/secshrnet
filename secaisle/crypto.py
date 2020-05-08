@@ -1,6 +1,6 @@
 from Crypto.Cipher import AES, ChaCha20_Poly1305
 from Crypto.Random import get_random_bytes
-from Crypto.Protocol.secret_sharing import Shamir
+from Crypto.Protocol.SecretSharing import Shamir
 
 import comms_pb2
 

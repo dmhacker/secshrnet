@@ -10,7 +10,7 @@ import time
 import os
 import socket
 
-# import crypto
+import crypto
 import sockutil
 import comms_pb2
 
@@ -76,10 +76,13 @@ class Server:
                     self.redis.publish('secaisle:host:' + packet.sender,
                                        pong.SerializeToString())
             elif packet.type == comms_pb2.PacketType.STORE:
+                # TODO: packet.share, packet.tag - store this in local filesystem 
                 pass
             elif packet.type == comms_pb2.PacketType.RECOVER:
+                # TODO: packet.tag - look for tag in local filesystem
                 pass
             elif packet.type == comms_pb2.PacketType.RETURN:
+                # TODO: packet.share - send this to command processor for recombination
                 pass
             else:
                 logger.warn("Unable to process unknown packet {}.".format(
@@ -97,7 +100,18 @@ class Server:
             self.redis.publish('secaisle:broadcast', ping_str)
 
     def split_shares(self, command, response):
-        pass
+        if command.threshold > len(self.hosts):
+            response.success = False
+            return
+        shares = crypto.split_shares(command.content, command.threshold, len(self.hosts))
+        i = 0
+        for hid in self.hosts.keys():
+            packet = comms_pb2.Packet()
+            packet.type = comms_pb2.PacketType.STORE
+            packet.tag = command.tag
+            packet.share = shares[i]
+            i += 1
+        response.success = True
 
     def recover_shares(self, command, response):
         pass
