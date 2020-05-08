@@ -8,17 +8,16 @@ message Share {
     string ciphertext = 3;
 }
 
+enum PacketType {
+    IAM = 0;
+    STORE = 1;
+    RECOVER = 2;
+    RETURN = 3;
+}
+
 message Packet {
-    enum PacketType {
-        IAM = 0;
-        ACK = 1;
-        STORE = 2;
-        RECOVER = 3;
-        RETURN = 4;
-    }
-    
     PacketType type = 1;
-    string from = 2;
+    string sender = 2;
     bool needs_ack = 3;
     string filename = 4;
     Share share = 5;

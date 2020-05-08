@@ -8,5 +8,6 @@ pycryptodome = "*"
 protobuf = "*"
 redis = "*"
 expiringdict = "*"
+loguru = "*"
 
 [dev-packages]
