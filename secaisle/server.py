@@ -2,19 +2,21 @@ from expiringdict import ExpiringDict
 from queue import Queue
 from loguru import logger
 
-import pathlib
 import redis
+import pathlib
 import uuid
 import threading
 import time
 import os
 import socket
 
-import packets_pb2
+# import crypto
+import sockutil
+import comms_pb2
 
 HOST_REFRESH_SECONDS = 1800
 HOST_TTL_SECONDS = 3600
-SOCKET_FILE = '{}/secaisle/socket'.format(os.environ['XDG_RUNTIME_DIR'])
+SOCKET_FILE = '/tmp/secaisle-socket'
 SHARE_DIRECTORY = '{}/.secaisle/shares'.format(os.environ['HOME'])
 
 
@@ -27,7 +29,6 @@ class Server:
         except OSError:
             if os.path.exists(SOCKET_FILE):
                 raise ValueError("Socket address {} is already in use.")
-        pathlib.Path(SOCKET_FILE).parent.mkdir(parents=True, exist_ok=True)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(SOCKET_FILE)
         self.hid = str(uuid.uuid4())
@@ -48,14 +49,14 @@ class Server:
         logger.info("Packet listener started.")
         self.pubsub.subscribe('secaisle:broadcast')
         self.pubsub.subscribe('secaisle:host:' + self.hid)
-        ping = packets_pb2.Packet()
-        ping.type = packets_pb2.PacketType.IAM
+        ping = comms_pb2.Packet()
+        ping.type = comms_pb2.PacketType.IAM
         ping.sender = self.hid
         ping.needs_ack = True
         self.redis.publish('secaisle:broadcast', ping.SerializeToString())
         for message in self.pubsub.listen():
             if message['type'] == 'message':
-                packet = packets_pb2.Packet()
+                packet = comms_pb2.Packet()
                 packet.ParseFromString(message['data'])
                 self.received_packets.put(packet)
 
@@ -65,20 +66,20 @@ class Server:
             packet = self.received_packets.get()
             logger.info("Received packet {} from host {}.".format(
                 packet.type, packet.sender))
-            if packet.type == packets_pb2.PacketType.IAM:
+            if packet.type == comms_pb2.PacketType.IAM:
                 self.hosts[packet.sender] = True
                 if packet.needs_ack:
-                    pong = packets_pb2.Packet()
-                    pong.type = packets_pb2.PacketType.IAM
+                    pong = comms_pb2.Packet()
+                    pong.type = comms_pb2.PacketType.IAM
                     pong.sender = self.hid
                     pong.needs_ack = False
                     self.redis.publish('secaisle:host:' + packet.sender,
                                        pong.SerializeToString())
-            elif packet.type == packets_pb2.PacketType.STORE:
+            elif packet.type == comms_pb2.PacketType.STORE:
                 pass
-            elif packet.type == packets_pb2.PacketType.RECOVER:
+            elif packet.type == comms_pb2.PacketType.RECOVER:
                 pass
-            elif packet.type == packets_pb2.PacketType.RETURN:
+            elif packet.type == comms_pb2.PacketType.RETURN:
                 pass
             else:
                 logger.warn("Unable to process unknown packet {}.".format(
@@ -86,14 +87,48 @@ class Server:
 
     def _keepalive_broadcaster(self):
         logger.info("Keepalive broadcaster started.")
-        ping = packets_pb2.Packet()
-        ping.type = packets_pb2.PacketType.IAM
+        ping = comms_pb2.Packet()
+        ping.type = comms_pb2.PacketType.IAM
         ping.sender = self.hid
         ping.needs_ack = False
         ping_str = ping.SerializeToString()
         while True:
             time.sleep(HOST_REFRESH_SECONDS)
             self.redis.publish('secaisle:broadcast', ping_str)
+
+    def split_shares(self, command, response):
+        pass
+
+    def recover_shares(self, command, response):
+        pass
+
+    def _command_processor(self):
+        logger.info("Server is now listening for commands.")
+        self.sock.listen(1)
+        while True:
+            conn, client_addr = self.sock.accept()
+            try:
+                while True:
+                    message = sockutil.recv_msg(conn)
+                    if message is None:
+                        break
+                    command = comms_pb2.Command()
+                    command.ParseFromString(message)
+                    response = comms_pb2.Response()
+                    if command.type == comms_pb2.CommandType.NUM_HOSTS:
+                        response.success = True
+                        response.host_count = len(self.hosts)
+                    elif command.type == comms_pb2.CommandType.SPLIT:
+                        self.split_shares(command, response)
+                    elif command.type == comms_pb2.CommandType.COMBINE:
+                        self.cover_shares(command, response)
+                    else:
+                        response.success = False
+                        logger.warn("Unable to process unknown command {}."
+                                    .format(command.type))
+                    conn.send(response.SerializeToString())
+            finally:
+                conn.close()
 
     def run(self):
         threads = []
@@ -105,13 +140,4 @@ class Server:
                                         daemon=True))
         for thr in threads:
             thr.start()
-
-        logger.info("Server is now listening on its socket.")
-        self.sock.listen(1)
-        while True:
-            conn, client_addr = self.sock.accept()
-            try:
-                data = conn.recv(1024)
-                print(data)
-            finally:
-                conn.close()
+        self._command_processor()

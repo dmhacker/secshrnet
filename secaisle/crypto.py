@@ -2,7 +2,7 @@ from Crypto.Cipher import AES, ChaCha20_Poly1305
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.secret_sharing import Shamir
 
-import packets_pb2
+import comms_pb2
 
 
 def split_shares(message, threshold, share_count):
@@ -15,7 +15,7 @@ def split_shares(message, threshold, share_count):
     raw_shares = Shamir.split(threshold, share_count, key)
 
     def _to_protobuf(raw_share):
-        share = packets_pb2.Share()
+        share = comms_pb2.Share()
         share.id = raw_share[0]
         share.key_share = raw_share[1]
         share.ciphertext = cipher.nonce + tag + ct

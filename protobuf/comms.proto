@@ -19,6 +19,25 @@ message Packet {
     PacketType type = 1;
     string sender = 2;
     bool needs_ack = 3;
-    string filename = 4;
+    string tag = 4;
     Share share = 5;
+}
+
+enum CommandType {
+    NUM_HOSTS = 0;
+    SPLIT = 1;
+    COMBINE = 2;
+}
+
+message Command {
+    CommandType type = 1;
+    string content = 2;
+    string tag = 3;
+    uint32 threshold = 4;
+}
+
+message Response {
+    bool success = 1;
+    uint32 host_count = 2;
+    string content = 3;
 }
