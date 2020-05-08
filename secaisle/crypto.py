@@ -5,10 +5,10 @@ from Crypto.Protocol.secret_sharing import Shamir
 import packets_pb2
 
 
-def split_shares(content, threshold, share_count):
+def split_shares(message, threshold, share_count):
     key = get_random_bytes(16)
     cipher = AES.new(key, AES.MODE_EAX)
-    ct, tag = cipher.encrypt_and_digest()
+    ct, tag = cipher.encrypt_and_digest(message)
     # Tag and nonce should both be 16 bytes
     assert(len(cipher.nonce) == 16)
     assert(len(ct) == 16)
@@ -43,18 +43,19 @@ def combine_shares(shares):
         return None
 
 
-def encrypt_plaintext(content, key):
+def encrypt_plaintext(message, key):
     cipher = ChaCha20_Poly1305.new(key=key)
-    ct, tag = cipher.encrypt_and_digest(content)
+    ct, tag = cipher.encrypt_and_digest(message)
+    # 12 bytes is the default nonce length
     assert(len(cipher.nonce) == 12)
     assert(len(tag) == 16)
     return cipher.nonce + tag + ct
 
 
-def decrypt_ciphertext(content, key):
-    nonce = content[:12]
-    tag = content[12:28]
-    ct = content[28:]
+def decrypt_ciphertext(ct, key):
+    nonce = ct[:12]
+    tag = ct[12:28]
+    ct = ct[28:]
     cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
     try:
         return cipher.decrypt_and_verify(ct, tag)
