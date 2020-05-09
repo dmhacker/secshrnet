@@ -6,6 +6,7 @@ message Share {
     uint32 index = 1;
     string key_share = 2;
     string ciphertext = 3;
+    string ciphertext_hash = 4;
 }
 
 enum PacketType {
@@ -31,13 +32,13 @@ enum CommandType {
 
 message Command {
     CommandType type = 1;
-    string content = 2;
+    uint32 threshold = 2;
     string tag = 3;
-    uint32 threshold = 4;
+    string plaintext = 4;
 }
 
 message Response {
     bool success = 1;
     uint32 host_count = 2;
-    string content = 3;
+    string payload = 3;
 }

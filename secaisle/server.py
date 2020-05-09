@@ -9,6 +9,7 @@ import threading
 import time
 import os
 import socket
+import base64
 
 import crypto
 import sockutil
@@ -76,16 +77,22 @@ class Server:
                     self.redis.publish('secaisle:host:' + packet.sender,
                                        pong.SerializeToString())
             elif packet.type == comms_pb2.PacketType.STORE:
-                # TODO: packet.share, packet.tag - store this in local filesystem 
-                pass
+                tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
+                logger.info("Storing share to tag '{}' @ {}."
+                            .format(packet.tag, tagpath))
+                if os.path.exists(tagpath):
+                    logger.warning('{} is being overwritten.'
+                                   .format(tagpath))
+                with open(tagpath, 'wb') as f:
+                    f.write(packet.share.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RECOVER:
                 # TODO: packet.tag - look for tag in local filesystem
                 pass
             elif packet.type == comms_pb2.PacketType.RETURN:
-                # TODO: packet.share - send this to command processor for recombination
+                # TODO: packet.share - send share to command processor
                 pass
             else:
-                logger.warn("Unable to process unknown packet {}.".format(
+                logger.warning("Unable to process unknown packet {}.".format(
                     packet.type))
 
     def _keepalive_broadcaster(self):
@@ -99,22 +106,40 @@ class Server:
             time.sleep(HOST_REFRESH_SECONDS)
             self.redis.publish('secaisle:broadcast', ping_str)
 
-    def split_shares(self, command, response):
-        if command.threshold > len(self.hosts):
-            response.success = False
-            return
-        shares = crypto.split_shares(command.content, command.threshold, len(self.hosts))
+    def split_shares(self, tag, plaintext, threshold):
+        '''
+        :param Server self: The active Server object
+        :param bytes plaintext: Plaintext message (in bytes)
+        :param str tag: The tag that this message will get filed under
+        :param int threshold: Minimum number of shares needed for recreation
+        '''
+        if threshold > len(self.hosts):
+            raise ValueError('Threshold must not be greater than the host count.')
+        shares = crypto.split_shares(plaintext, threshold, len(self.hosts))
         i = 0
         for hid in self.hosts.keys():
             packet = comms_pb2.Packet()
             packet.type = comms_pb2.PacketType.STORE
-            packet.tag = command.tag
-            packet.share = shares[i]
+            packet.sender = self.hid
+            packet.tag = tag
+            packet.share.index = shares[i].index
+            packet.share.key_share = shares[i].key_share
+            packet.share.ciphertext = shares[i].ciphertext
+            packet.share.ciphertext_hash = shares[i].ciphertext_hash
+            self.redis.publish('secaisle:host:' + hid,
+                               packet.SerializeToString())
             i += 1
-        response.success = True
+        return
 
-    def recover_shares(self, command, response):
-        pass
+    def recover_shares(self, tag):
+        '''
+        :param Server self: The active Server object
+        :param str tag: The tag for the message we want to fetch
+        :return: The message if it could be recovered, otherwise None
+        :rtype bytes:
+        '''
+        # TODO: Broadcast RECOVER packet, aggregate RETURN shares
+        return None
 
     def _command_processor(self):
         logger.info("Server is now listening for commands.")
@@ -133,13 +158,31 @@ class Server:
                         response.success = True
                         response.host_count = len(self.hosts)
                     elif command.type == comms_pb2.CommandType.SPLIT:
-                        self.split_shares(command, response)
+                        try:
+                            # Actual plaintext is wrapped in a base64 encoding
+                            plaintext = base64.b64decode(command.plaintext.encode())
+                            self.split_shares(command.tag,
+                                              plaintext,
+                                              command.threshold)
+                            response.success = True
+                        except Exception as e:
+                            response.success = False
+                            response.payload = str(e)
                     elif command.type == comms_pb2.CommandType.COMBINE:
-                        self.cover_shares(command, response)
+                        try:
+                            message = self.recover_shares(command.tag)
+                            # Rewrap plaintext in a base64 encoding
+                            response.success = message is not None
+                            if response.success:
+                                response.payload = base64.b64encode(message).decode()
+                            else:
+                                response.payload = 'Could not acquire enough shares to reconstruct message.'
+                        except Exception as e:
+                            response.success = False
+                            response.payload = str(e)
                     else:
                         response.success = False
-                        logger.warn("Unable to process unknown command {}."
-                                    .format(command.type))
+                        response.payload = "Unknown command type {}.".format(command.type)
                     conn.send(response.SerializeToString())
             finally:
                 conn.close()
