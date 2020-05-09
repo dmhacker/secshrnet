@@ -10,4 +10,6 @@ redis = "*"
 expiringdict = "*"
 loguru = "*"
 
-[dev-packages]
+[scripts]
+secaisle = "python seciasle/client.py"
+secaisled = "python secaisle/server.py"

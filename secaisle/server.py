@@ -283,3 +283,9 @@ class Server:
         # Wait for host discovery to complete before accepting commands
         time.sleep(HOST_DISCOVERY_SECONDS)
         self._command_processor()
+
+
+if __name__ == '__main__':
+    Server(os.environ['REDIS_URL'],
+           int(os.environ['REDIS_PORT']),
+           os.environ['REDIS_DATABASE']).run()
