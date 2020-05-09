@@ -87,10 +87,10 @@ def combine_shares(shares):
         key_share = base64.b64decode(share.key_share.encode())
         return (share.index, key_share)
 
-    key = Shamir.combine_shares(list(map(_to_raw, shares)))
+    key = Shamir.combine(list(map(_to_raw, shares)))
     ct = base64.b64decode(shares[0].ciphertext.encode())
     nonce = ct[:16]
-    tag = ct[16:31]
+    tag = ct[16:32]
     ct = ct[32:]
     cipher = AES.new(key, AES.MODE_EAX, nonce)
     try:

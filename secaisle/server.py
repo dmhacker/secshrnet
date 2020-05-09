@@ -1,6 +1,6 @@
 from expiringdict import ExpiringDict
-from queue import Queue
 from loguru import logger
+from collections import Counter
 
 import redis
 import pathlib
@@ -10,6 +10,7 @@ import time
 import os
 import socket
 import base64
+import queue
 
 import crypto
 import sockutil
@@ -18,6 +19,7 @@ import comms_pb2
 HOST_REFRESH_SECONDS = 1800
 HOST_TTL_SECONDS = 3600
 RECOVER_TIMEOUT_SECONDS = 30
+HOST_DISCOVERY_SECONDS = 10
 SOCKET_FILE = '/tmp/secaisle-socket'
 SHARE_DIRECTORY = '{}/.secaisle/shares'.format(os.environ['HOME'])
 
@@ -42,8 +44,8 @@ class Server:
         self.hosts = ExpiringDict(max_len=1e10,
                                   max_age_seconds=HOST_TTL_SECONDS)
         self.hlock = threading.Lock()
-        self.received_packets = Queue()
-        self.recovered_shares = Queue()
+        self.received_packets = queue.Queue()
+        self.return_packets = queue.Queue()
         logger.add("logs/secaisle_{}.log".format(self.hid))
         logger.info("Session host ID is {}.".format(self.hid))
 
@@ -83,8 +85,31 @@ class Server:
         packet.sender = self.hid
         packet.tag = tag
         self.redis.publish('secaisle:broadcast', packet.SerializeToString())
-        # TODO: Wait on self.recovered_shares for RETURN shares to come in
-        return None
+        with self.hlock:
+            hkeys = set(self.hosts.keys())
+        timestamp = time.time() + RECOVER_TIMEOUT_SECONDS
+        shares = []
+        while True:
+            try:
+                timeout = timestamp - time.time()
+                if timeout <= 0:
+                    break
+                packet = self.return_packets.get(timeout=timeout)
+                if packet.sender in hkeys:
+                    shares.append(packet.share)
+                    hkeys.remove(packet.sender)
+                    if len(hkeys) == 0:
+                        break
+            except queue.Empty:
+                break
+        if not shares:
+            return None
+        hashes = [share.ciphertext_hash for share in shares]
+        max_hash, _ = Counter(hashes).most_common(1)[0]
+        majority_shares = [share for share in shares if share.ciphertext_hash == max_hash]
+        if not majority_shares:
+            return None
+        return crypto.combine_shares(majority_shares)
 
     def _packet_listener(self):
         '''
@@ -162,7 +187,7 @@ class Server:
             elif packet.type == comms_pb2.PacketType.RETURN:
                 logger.info("Got a share from host {}."
                             .format(packet.sender))
-                self.recovered_shares.put(packet.share)
+                self.return_packets.put(packet)
             else:
                 logger.warning("Unknown packet type {}.".format(
                     packet.type))
@@ -188,6 +213,7 @@ class Server:
         socket and fielding commands from clients who join via the socket.
         '''
         self.sock.listen(1)
+        logger.info("Now accepting commands from clients.")
         while True:
             conn, client_addr = self.sock.accept()
             try:
@@ -229,8 +255,8 @@ class Server:
                                 response.payload = base64.b64encode(
                                     message).decode()
                             else:
-                                response.payload = 'Could not acquire enough \
-                                    shares to reconstruct message.'
+                                response.payload = "Could not acquire enough \
+                                    shares to reconstruct message."
                         except Exception as e:
                             response.success = False
                             response.payload = str(e)
@@ -254,4 +280,6 @@ class Server:
                                         daemon=True))
         for thr in threads:
             thr.start()
+        # Wait for host discovery to complete before accepting commands
+        time.sleep(HOST_DISCOVERY_SECONDS)
         self._command_processor()
