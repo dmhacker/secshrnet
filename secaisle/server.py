@@ -45,7 +45,7 @@ class Server:
         self.received_packets = Queue()
         self.recovered_shares = Queue()
         logger.add("logs/secaisle_{}.log".format(self.hid))
-        logger.info("Our host ID is {}.".format(self.hid))
+        logger.info("Session host ID is {}.".format(self.hid))
 
     def split_plaintext(self, tag, plaintext, threshold):
         '''
