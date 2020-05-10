@@ -2,6 +2,7 @@ from Crypto.Cipher import AES, ChaCha20_Poly1305
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.SecretSharing import Shamir
 from Crypto.Hash import BLAKE2s
+from collections import Counter
 
 import comms_pb2
 import base64
@@ -56,7 +57,7 @@ def split_shares(message, threshold, share_count):
     :param bytes message: Message bytes
     :param int threshold: Minimum number of shares needed for reconstruction
     :param int share_count: Number of shares to produce
-    :return: A list of protobuf shares objects
+    :return: List of protobuf shares
     :rtype: [comms_pb2.Share]
     '''
     key = get_random_bytes(16)
@@ -80,15 +81,24 @@ def split_shares(message, threshold, share_count):
 
 
 def combine_shares(shares):
+    '''
+    :param [comms_pb2.Share] message: List of protobuf shares
+    :return: Reconstructed message if possible
+    :rtype: bytes
+    '''
     if not shares:
         return None
+    hashes = [share.ciphertext_hash for share in shares]
+    max_hash, _ = Counter(hashes).most_common(1)[0]
+    majority_shares = [share for share in shares if
+                       share.ciphertext_hash == max_hash]
 
     def _to_raw(share):
         key_share = base64.b64decode(share.key_share.encode())
         return (share.index, key_share)
 
-    key = Shamir.combine(list(map(_to_raw, shares)))
-    ct = base64.b64decode(shares[0].ciphertext.encode())
+    key = Shamir.combine(list(map(_to_raw, majority_shares)))
+    ct = base64.b64decode(majority_shares[0].ciphertext.encode())
     nonce = ct[:16]
     tag = ct[16:32]
     ct = ct[32:]
