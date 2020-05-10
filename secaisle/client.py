@@ -13,7 +13,6 @@ class Client:
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(SOCKET_FILE)
 
-
     def num_hosts(self):
         command = comms_pb2.Command()
         command.type = comms_pb2.CommandType.NUM_HOSTS
@@ -23,6 +22,12 @@ class Client:
         if not response.success:
             raise ValueError(response.payload)
         return response.host_count
+
+    def split(self, tag, plaintext, threshold):
+        pass
+
+    def combine(self, tag):
+        pass
 
 if __name__ == '__main__':
     print(Client().num_hosts())
