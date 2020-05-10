@@ -131,6 +131,7 @@ class Server:
         '''
         self.pubsub.subscribe('secaisle:broadcast')
         self.pubsub.subscribe('secaisle:host:' + self.hid)
+        logger.info("Packet listener thread is now online.")
         for message in self.pubsub.listen():
             if message['type'] == 'message':
                 packet = comms_pb2.Packet()
@@ -149,6 +150,7 @@ class Server:
         it will be handled individually and in-order. This may entail
         response packets being broadcasted back.
         '''
+        logger.info("Packet processing thread is now online.")
         while True:
             packet = self.received_packets.get()
             if packet.type == comms_pb2.PacketType.STORE:
@@ -198,11 +200,11 @@ class Server:
                     command.ParseFromString(message)
                     response = comms_pb2.Response()
                     if command.type == comms_pb2.CommandType.NUM_HOSTS:
-                        logger.info("Processing NUM_HOSTS command.")
+                        logger.info("NUM_HOSTS command received.")
                         response.success = True
                         response.host_count = len(self.hosts())
                     elif command.type == comms_pb2.CommandType.SPLIT:
-                        logger.info("Processing SPLIT command for tag '{}'."
+                        logger.info("SPLIT '{}' command received."
                                     .format(command.tag))
                         try:
                             # Received plaintext must be base64-decoded
@@ -216,7 +218,7 @@ class Server:
                             response.success = False
                             response.payload = str(e)
                     elif command.type == comms_pb2.CommandType.COMBINE:
-                        logger.info("Processing COMBINE command for tag '{}'."
+                        logger.info("COMBINE '{}' command received."
                                     .format(command.tag))
                         try:
                             message = self.combine_shares(command.tag)
