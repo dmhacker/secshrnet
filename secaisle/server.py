@@ -7,14 +7,13 @@ import threading
 import time
 import os
 import socket
-import base64
 import queue
 
 import crypto
 import sockutil
 import comms_pb2
 
-RECOVER_TIMEOUT_SECONDS = 30
+RECOVER_TIMEOUT_SECONDS = 10
 SOCKET_FILE = '/tmp/secaisle-socket'
 SHARE_DIRECTORY = '{}/.secaisle/shares'.format(os.environ['HOME'])
 
@@ -57,8 +56,8 @@ class Server:
     def split_plaintext(self, tag, plaintext, threshold):
         '''
         :param Server self: The active Server object
-        :param bytes plaintext: Plaintext message (in bytes)
         :param str tag: The tag that this message will get filed under
+        :param bytes plaintext: Plaintext message (in bytes)
         :param int threshold: Minimum number of shares needed for recreation
         '''
         hkeys = self.hosts()
@@ -100,12 +99,15 @@ class Server:
                     break
                 packet = self.return_packets.get(timeout=timeout)
                 if packet.sender in hkeys:
-                    shares.append(packet.share)
+                    if packet.share_found:
+                        shares.append(packet.share)
                     hkeys.remove(packet.sender)
                     if len(hkeys) == 0:
                         break
             except queue.Empty:
                 break
+        for bad_host in hkeys:
+            logger.warn("Host {} timed out.".format(bad_host))
         return crypto.combine_shares(shares)
 
     def _packet_listener(self):
@@ -154,20 +156,28 @@ class Server:
                 with open(tagpath, 'wb') as f:
                     f.write(packet.share.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RECOVER:
-                logger.info("Sending share for tag '{}' to host {}."
-                            .format(packet.tag, packet.sender))
                 tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
-                if os.path.exists(tagpath):
+                response = comms_pb2.Packet()
+                response.type = comms_pb2.PacketType.RETURN
+                response.sender = self.hid
+                response.share_found = os.path.exists(tagpath)
+                if response.share_found:
                     with open(tagpath, 'rb') as f:
-                        response = comms_pb2.Packet()
-                        response.type = comms_pb2.PacketType.RETURN
-                        response.sender = self.hid
                         response.share.ParseFromString(f.read())
-                        self.redis.publish('secaisle:host:' + packet.sender,
-                                           response.SerializeToString())
+                    logger.info("Sending a '{}' share to host {}."
+                                .format(packet.tag, packet.sender))
+                else:
+                    logger.warning("Unable to send a '{}' share to host {}."
+                                   .format(packet.tag, packet.sender))
+                self.redis.publish('secaisle:host:' + packet.sender,
+                                   response.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RETURN:
-                logger.info("Got a share from host {}."
-                            .format(packet.sender))
+                if packet.share_found:
+                    logger.info("Host {} gave us their share."
+                                .format(packet.sender, packet.tag))
+                else:
+                    logger.warning("Host {} did not have a share."
+                                   .format(packet.sender))
                 self.return_packets.put(packet)
             else:
                 logger.warning("Unknown packet type {}.".format(
@@ -193,21 +203,18 @@ class Server:
                     if command.type == comms_pb2.CommandType.NUM_HOSTS:
                         logger.info("NUM_HOSTS command received.")
                         response.success = True
-                        response.host_count = len(self.hosts())
+                        response.num_hosts = len(self.hosts())
                     elif command.type == comms_pb2.CommandType.SPLIT:
                         logger.info("SPLIT '{}' command received."
                                     .format(command.tag))
                         try:
-                            # Received plaintext must be base64-decoded
-                            plaintext = base64.b64decode(
-                                command.plaintext.encode())
                             self.split_plaintext(command.tag,
-                                                 plaintext,
+                                                 command.plaintext,
                                                  command.threshold)
                             response.success = True
                         except Exception as e:
                             response.success = False
-                            response.payload = str(e)
+                            response.error = str(e)
                     elif command.type == comms_pb2.CommandType.COMBINE:
                         logger.info("COMBINE '{}' command received."
                                     .format(command.tag))
@@ -215,20 +222,22 @@ class Server:
                             message = self.combine_shares(command.tag)
                             response.success = message is not None
                             if response.success:
-                                # Outgoing plaintext must be base64-encoded
-                                response.payload = base64.b64encode(
-                                    message).decode()
+                                response.plaintext = message
                             else:
-                                response.payload = "Could not acquire enough \
-                                    shares to reconstruct message."
+                                response.error = ("Could not acquire enough "
+                                                  "shares to reconstruct "
+                                                  "message.")
                         except Exception as e:
                             response.success = False
-                            response.payload = str(e)
+                            response.error = str(e)
                     else:
                         response.success = False
-                        response.payload = "Unknown command \
-                            type {}.".format(command.type)
-                    sockutil.send_msg(conn, response.SerializeToString())
+                        response.error = ("Unknown command type {}."
+                                          .format(command.type))
+                    try:
+                        sockutil.send_msg(conn, response.SerializeToString())
+                    except BrokenPipeError:
+                        pass
             finally:
                 conn.close()
 

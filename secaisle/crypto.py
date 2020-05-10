@@ -5,7 +5,6 @@ from Crypto.Hash import BLAKE2s
 from collections import Counter
 
 import comms_pb2
-import base64
 
 
 def encrypt_plaintext(message, key):
@@ -40,16 +39,15 @@ def decrypt_ciphertext(ct, key):
         return None
 
 
-def hash256(message, hex_output=False):
+def hash256(message):
     '''
     :param bytes message: Message bytes
-    :param bool hex_output: If true, output is a hexadecimal string.
     :return: Digest of the message
-    :rtype: str if hex_output else bytes
+    :rtype: bytes
     '''
     hasher = BLAKE2s.new(digest_bits=256)
     hasher.update(message)
-    return hasher.hexdigest() if hex_output else hasher.digest()
+    return hasher.digest()
 
 
 def split_shares(message, threshold, share_count):
@@ -72,9 +70,9 @@ def split_shares(message, threshold, share_count):
     def _to_protobuf(raw_share):
         share = comms_pb2.Share()
         share.index = raw_share[0]
-        share.key_share = base64.b64encode(raw_share[1]).decode()
-        share.ciphertext = base64.b64encode(full_ct).decode()
-        share.ciphertext_hash = hash256(full_ct, hex_output=True)
+        share.key_share = raw_share[1]
+        share.ciphertext = full_ct
+        share.ciphertext_hash = hash256(full_ct)
         return share
 
     return list(map(_to_protobuf, raw_shares))
@@ -94,11 +92,10 @@ def combine_shares(shares):
                        share.ciphertext_hash == max_hash]
 
     def _to_raw(share):
-        key_share = base64.b64decode(share.key_share.encode())
-        return (share.index, key_share)
+        return (share.index, share.key_share)
 
     key = Shamir.combine(list(map(_to_raw, majority_shares)))
-    ct = base64.b64decode(majority_shares[0].ciphertext.encode())
+    ct = majority_shares[0].ciphertext
     nonce = ct[:16]
     tag = ct[16:32]
     ct = ct[32:]
