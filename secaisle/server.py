@@ -1,4 +1,3 @@
-from expiringdict import ExpiringDict
 from loguru import logger
 from collections import Counter
 
@@ -16,10 +15,7 @@ import crypto
 import sockutil
 import comms_pb2
 
-HOST_REFRESH_SECONDS = 1800
-HOST_TTL_SECONDS = 3600
 RECOVER_TIMEOUT_SECONDS = 30
-HOST_DISCOVERY_SECONDS = 10
 SOCKET_FILE = '/tmp/secaisle-socket'
 SHARE_DIRECTORY = '{}/.secaisle/shares'.format(os.environ['HOME'])
 
@@ -41,13 +37,23 @@ class Server:
             password=redis_password)
         self.pubsub = self.redis.pubsub()
         self.hid = str(uuid.uuid4())
-        self.hosts = ExpiringDict(max_len=1e10,
-                                  max_age_seconds=HOST_TTL_SECONDS)
-        self.hlock = threading.Lock()
         self.received_packets = queue.Queue()
         self.return_packets = queue.Queue()
         logger.add("logs/secaisle_{}.log".format(self.hid))
         logger.info("Session host ID is {}.".format(self.hid))
+
+    def hosts(self):
+        '''
+        :param Server self: The active Server object
+        :return: List of active host IDs
+        :rtype: [str]
+        '''
+        channels = self.redis.pubsub_channels('secaisle:host:*')
+
+        def extract_host(channel):
+            return channel.decode()[len('secaisle:host:'):]
+
+        return [extract_host(channel) for channel in channels]
 
     def split_plaintext(self, tag, plaintext, threshold):
         '''
@@ -56,10 +62,10 @@ class Server:
         :param str tag: The tag that this message will get filed under
         :param int threshold: Minimum number of shares needed for recreation
         '''
-        with self.hlock:
-            hkeys = list(self.hosts.keys())
+        hkeys = self.hosts()
         if threshold > len(hkeys):
-            raise ValueError('Threshold must not be greater than the host count.')
+            raise ValueError('Threshold must not be greater than \
+                             the host count.')
         shares = crypto.split_shares(plaintext, threshold, len(hkeys))
         for i, hid in enumerate(hkeys):
             packet = comms_pb2.Packet()
@@ -85,8 +91,7 @@ class Server:
         packet.sender = self.hid
         packet.tag = tag
         self.redis.publish('secaisle:broadcast', packet.SerializeToString())
-        with self.hlock:
-            hkeys = set(self.hosts.keys())
+        hkeys = self.hosts()
         timestamp = time.time() + RECOVER_TIMEOUT_SECONDS
         shares = []
         while True:
@@ -125,12 +130,6 @@ class Server:
         '''
         self.pubsub.subscribe('secaisle:broadcast')
         self.pubsub.subscribe('secaisle:host:' + self.hid)
-        ping = comms_pb2.Packet()
-        ping.type = comms_pb2.PacketType.IAM
-        ping.sender = self.hid
-        ping.needs_ack = True
-        logger.info("Broadcasting initial discovery ping.")
-        self.redis.publish('secaisle:broadcast', ping.SerializeToString())
         for message in self.pubsub.listen():
             if message['type'] == 'message':
                 packet = comms_pb2.Packet()
@@ -151,19 +150,7 @@ class Server:
         '''
         while True:
             packet = self.received_packets.get()
-            if packet.type == comms_pb2.PacketType.IAM:
-                logger.info("Received ping from host {}.".format(
-                    packet.sender))
-                with self.hlock:
-                    self.hosts[packet.sender] = True
-                if packet.needs_ack:
-                    pong = comms_pb2.Packet()
-                    pong.type = comms_pb2.PacketType.IAM
-                    pong.sender = self.hid
-                    pong.needs_ack = False
-                    self.redis.publish('secaisle:host:' + packet.sender,
-                                       pong.SerializeToString())
-            elif packet.type == comms_pb2.PacketType.STORE:
+            if packet.type == comms_pb2.PacketType.STORE:
                 logger.info("Saving share for tag '{}' from host {}."
                             .format(packet.tag, packet.sender))
                 tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
@@ -192,21 +179,6 @@ class Server:
                 logger.warning("Unknown packet type {}.".format(
                     packet.type))
 
-    def _keepalive_broadcaster(self):
-        '''
-        The keepalive broadcaster is responsible for publishing a ping packet
-        at a specified duration. This periodically refreshes the host list for
-        each machine on the network.
-        '''
-        ping = comms_pb2.Packet()
-        ping.type = comms_pb2.PacketType.IAM
-        ping.sender = self.hid
-        ping.needs_ack = False
-        ping_str = ping.SerializeToString()
-        while True:
-            time.sleep(HOST_REFRESH_SECONDS)
-            self.redis.publish('secaisle:broadcast', ping_str)
-
     def _command_processor(self):
         '''
         The command processor is responsible for listening on a UNIX
@@ -227,8 +199,7 @@ class Server:
                     if command.type == comms_pb2.CommandType.NUM_HOSTS:
                         logger.info("Processing NUM_HOSTS command.")
                         response.success = True
-                        with self.hlock:
-                            response.host_count = len(self.hosts)
+                        response.host_count = len(self.hosts())
                     elif command.type == comms_pb2.CommandType.SPLIT:
                         logger.info("Processing SPLIT command for tag '{}'."
                                     .format(command.tag))
@@ -261,7 +232,8 @@ class Server:
                             response.payload = str(e)
                     else:
                         response.success = False
-                        response.payload = "Unknown command type {}.".format(command.type)
+                        response.payload = "Unknown command \
+                            type {}.".format(command.type)
                     sockutil.send_msg(conn, response.SerializeToString())
             finally:
                 conn.close()
@@ -275,12 +247,8 @@ class Server:
                                         daemon=True))
         threads.append(threading.Thread(target=self._packet_processor,
                                         daemon=True))
-        threads.append(threading.Thread(target=self._keepalive_broadcaster,
-                                        daemon=True))
         for thr in threads:
             thr.start()
-        # Wait for host discovery to complete before accepting commands
-        time.sleep(HOST_DISCOVERY_SECONDS)
         self._command_processor()
 
 

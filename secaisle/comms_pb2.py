@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='secaisle',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x0b\x63omms.proto\x12\x08secaisle\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\t\x12\x12\n\nciphertext\x18\x03 \x01(\t\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\t\"|\n\x06Packet\x12\"\n\x04type\x18\x01 \x01(\x0e\x32\x14.secaisle.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x11\n\tneeds_ack\x18\x03 \x01(\x08\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1e\n\x05share\x18\x05 \x01(\x0b\x32\x0f.secaisle.Share\"a\n\x07\x43ommand\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secaisle.CommandType\x12\x11\n\tthreshold\x18\x02 \x01(\r\x12\x0b\n\x03tag\x18\x03 \x01(\t\x12\x11\n\tplaintext\x18\x04 \x01(\t\"B\n\x08Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nhost_count\x18\x02 \x01(\r\x12\x11\n\tplaintext\x18\x03 \x01(\t*9\n\nPacketType\x12\x07\n\x03IAM\x10\x00\x12\t\n\x05STORE\x10\x01\x12\x0b\n\x07RECOVER\x10\x02\x12\n\n\x06RETURN\x10\x03*4\n\x0b\x43ommandType\x12\r\n\tNUM_HOSTS\x10\x00\x12\t\n\x05SPLIT\x10\x01\x12\x0b\n\x07\x43OMBINE\x10\x02\x62\x06proto3'
+  serialized_pb=b'\n\x0b\x63omms.proto\x12\x08secaisle\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\t\x12\x12\n\nciphertext\x18\x03 \x01(\t\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\t\"i\n\x06Packet\x12\"\n\x04type\x18\x01 \x01(\x0e\x32\x14.secaisle.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1e\n\x05share\x18\x05 \x01(\x0b\x32\x0f.secaisle.Share\"a\n\x07\x43ommand\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secaisle.CommandType\x12\x11\n\tthreshold\x18\x02 \x01(\r\x12\x0b\n\x03tag\x18\x03 \x01(\t\x12\x11\n\tplaintext\x18\x04 \x01(\t\"@\n\x08Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\nhost_count\x18\x02 \x01(\r\x12\x0f\n\x07payload\x18\x03 \x01(\t*0\n\nPacketType\x12\t\n\x05STORE\x10\x00\x12\x0b\n\x07RECOVER\x10\x01\x12\n\n\x06RETURN\x10\x02*4\n\x0b\x43ommandType\x12\r\n\tNUM_HOSTS\x10\x00\x12\t\n\x05SPLIT\x10\x01\x12\x0b\n\x07\x43OMBINE\x10\x02\x62\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -29,26 +29,22 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='IAM', index=0, number=0,
+      name='STORE', index=0, number=0,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='STORE', index=1, number=1,
+      name='RECOVER', index=1, number=1,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RECOVER', index=2, number=2,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='RETURN', index=3, number=3,
+      name='RETURN', index=2, number=2,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=406,
-  serialized_end=463,
+  serialized_start=385,
+  serialized_end=433,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
@@ -74,16 +70,15 @@ _COMMANDTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=465,
-  serialized_end=517,
+  serialized_start=435,
+  serialized_end=487,
 )
 _sym_db.RegisterEnumDescriptor(_COMMANDTYPE)
 
 CommandType = enum_type_wrapper.EnumTypeWrapper(_COMMANDTYPE)
-IAM = 0
-STORE = 1
-RECOVER = 2
-RETURN = 3
+STORE = 0
+RECOVER = 1
+RETURN = 2
 NUM_HOSTS = 0
 SPLIT = 1
 COMBINE = 2
@@ -164,21 +159,14 @@ _PACKET = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='needs_ack', full_name='secaisle.Packet.needs_ack', index=2,
-      number=3, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='tag', full_name='secaisle.Packet.tag', index=3,
+      name='tag', full_name='secaisle.Packet.tag', index=2,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='share', full_name='secaisle.Packet.share', index=4,
+      name='share', full_name='secaisle.Packet.share', index=3,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -197,7 +185,7 @@ _PACKET = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=113,
-  serialized_end=237,
+  serialized_end=218,
 )
 
 
@@ -248,8 +236,8 @@ _COMMAND = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=239,
-  serialized_end=336,
+  serialized_start=220,
+  serialized_end=317,
 )
 
 
@@ -275,7 +263,7 @@ _RESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='plaintext', full_name='secaisle.Response.plaintext', index=2,
+      name='payload', full_name='secaisle.Response.payload', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -293,8 +281,8 @@ _RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=338,
-  serialized_end=404,
+  serialized_start=319,
+  serialized_end=383,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKETTYPE

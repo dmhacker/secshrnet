@@ -10,16 +10,14 @@ message Share {
 }
 
 enum PacketType {
-    IAM = 0;
-    STORE = 1;
-    RECOVER = 2;
-    RETURN = 3;
+    STORE = 0;
+    RECOVER = 1;
+    RETURN = 2;
 }
 
 message Packet {
     PacketType type = 1;
     string sender = 2;
-    bool needs_ack = 3;
     string tag = 4;
     Share share = 5;
 }
