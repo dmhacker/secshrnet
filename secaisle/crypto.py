@@ -94,6 +94,6 @@ def combine_shares(shares):
     ct = ct[32:]
     cipher = AES.new(key, AES.MODE_EAX, nonce)
     try:
-        return cipher.decrypt_and_verify(ct, tag).decode()
+        return cipher.decrypt_and_verify(ct, tag)
     except ValueError:
         return None
