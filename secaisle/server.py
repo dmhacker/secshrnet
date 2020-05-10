@@ -111,7 +111,8 @@ class Server:
             return None
         hashes = [share.ciphertext_hash for share in shares]
         max_hash, _ = Counter(hashes).most_common(1)[0]
-        majority_shares = [share for share in shares if share.ciphertext_hash == max_hash]
+        majority_shares = [share for share in shares if
+                           share.ciphertext_hash == max_hash]
         if not majority_shares:
             return None
         return crypto.combine_shares(majority_shares)
