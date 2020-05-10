@@ -225,14 +225,13 @@ class Server:
                     command.ParseFromString(message)
                     response = comms_pb2.Response()
                     if command.type == comms_pb2.CommandType.NUM_HOSTS:
-                        logger.info("{} sent a NUM_HOSTS command."
-                                    .format(client_addr))
+                        logger.info("Processing NUM_HOSTS command.")
                         response.success = True
                         with self.hlock:
                             response.host_count = len(self.hosts)
                     elif command.type == comms_pb2.CommandType.SPLIT:
-                        logger.info("{} sent a SPLIT command for tag '{}'."
-                                    .format(client_addr, command.tag))
+                        logger.info("Processing SPLIT command for tag '{}'."
+                                    .format(command.tag))
                         try:
                             # Received plaintext must be base64-decoded
                             plaintext = base64.b64decode(
@@ -245,8 +244,8 @@ class Server:
                             response.success = False
                             response.payload = str(e)
                     elif command.type == comms_pb2.CommandType.COMBINE:
-                        logger.info("{} sent a COMBINE command for tag '{}'."
-                                    .format(client_addr, command.tag))
+                        logger.info("Processing COMBINE command for tag '{}'."
+                                    .format(command.tag))
                         try:
                             message = self.combine_shares(command.tag)
                             response.success = message is not None
@@ -263,7 +262,7 @@ class Server:
                     else:
                         response.success = False
                         response.payload = "Unknown command type {}.".format(command.type)
-                    conn.send(response.SerializeToString())
+                    sockutil.send_msg(conn, response.SerializeToString())
             finally:
                 conn.close()
 

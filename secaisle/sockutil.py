@@ -22,6 +22,5 @@ def recv_msg(sock):
     if not raw_msglen:
         return None
     msglen = struct.unpack('>I', raw_msglen)[0]
-    print(msglen)
     # Read the message data
     return recvall(sock, msglen)

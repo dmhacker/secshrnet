@@ -11,5 +11,5 @@ expiringdict = "*"
 loguru = "*"
 
 [scripts]
-secaisle = "python seciasle/client.py"
+secaislec = "python secaisle/client.py"
 secaisled = "python secaisle/server.py"
