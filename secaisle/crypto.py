@@ -7,6 +7,10 @@ from collections import Counter
 import comms_pb2
 
 
+class ShareError(Exception):
+    pass
+
+
 def encrypt_plaintext(message, key):
     '''
     :param bytes message: Plaintext message
@@ -58,6 +62,8 @@ def split_shares(message, threshold, share_count):
     :return: List of protobuf shares
     :rtype: [comms_pb2.Share]
     '''
+    if threshold > share_count:
+        raise ShareError("Threshold must not be greater than the share count.")
     key = get_random_bytes(16)
     cipher = AES.new(key, AES.MODE_EAX)
     ct, tag = cipher.encrypt_and_digest(message)
@@ -85,7 +91,7 @@ def combine_shares(shares):
     :rtype: bytes
     '''
     if not shares:
-        return None
+        raise ShareError("No shares provided for message reconstruction.")
     hashes = [share.ciphertext_hash for share in shares]
     max_hash, _ = Counter(hashes).most_common(1)[0]
     majority_shares = [share for share in shares if
@@ -103,4 +109,5 @@ def combine_shares(shares):
     try:
         return cipher.decrypt_and_verify(ct, tag)
     except ValueError:
-        return None
+        raise ShareError("Not enough shares acquired to produce "
+                         "a valid message.")

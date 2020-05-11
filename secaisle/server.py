@@ -63,8 +63,6 @@ class Server:
         :param int threshold: Minimum number of shares needed for recreation
         '''
         hkeys = self.hosts()
-        if threshold > len(hkeys):
-            return "Threshold must not be greater than the host count."
         shares = crypto.split_shares(plaintext, threshold, len(hkeys))
         for i, hid in enumerate(hkeys):
             packet = comms_pb2.Packet()
@@ -77,7 +75,6 @@ class Server:
             packet.share.ciphertext_hash = shares[i].ciphertext_hash
             self.redis.publish('secaisle:host:' + hid,
                                packet.SerializeToString())
-        return None
 
     def _collect_return_packets(self, timeout_duration):
         '''
@@ -211,25 +208,24 @@ class Server:
                     elif command.type == comms_pb2.CommandType.SPLIT:
                         logger.info("SPLIT '{}' command received."
                                     .format(command.tag))
-                        error = self.split_plaintext(command.tag,
-                                                     command.plaintext,
-                                                     command.threshold)
-                        if error is None:
+                        try:
+                            self.split_plaintext(command.tag,
+                                                 command.plaintext,
+                                                 command.threshold)
                             response.success = True
-                        else:
+                        except crypto.ShareError as e:
                             response.success = False
-                            response.error = error
+                            response.error = str(e)
                     elif command.type == comms_pb2.CommandType.COMBINE:
                         logger.info("COMBINE '{}' command received."
                                     .format(command.tag))
-                        message = self.combine_shares(command.tag)
-                        response.success = message is not None
-                        if response.success:
-                            response.plaintext = message
-                        else:
-                            response.error = ("Could not acquire enough "
-                                              "shares to reconstruct "
-                                              "message.")
+                        try:
+                            response.plaintext = self.combine_shares(
+                                command.tag)
+                            response.success = True
+                        except crypto.ShareError as e:
+                            response.success = False
+                            response.error = str(e)
                     else:
                         response.success = False
                         response.error = ("Unknown command type {}."
