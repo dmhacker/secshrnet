@@ -8,22 +8,17 @@ meaning it not only holds files, stores data, and responds
 to queries but also that it can issue queries of its own to
 aggregrate shares from other machines.
 
-In general, we try to stay true to the following principles:
+In general, the following principles hold:
 
-* Security
-    * If a machine is compromised while offline, data will
-    remain uncompromised up to some user-defined level due
-    to usage of a secret sharing scheme.
-    * If a machine is compromised while online, even if
-    shares can be readily aggregated, data on the network
-    will still remain encrypted via password protection.
-* Fault tolerance
-    * In the event that one or several machines stop
-    communicating, data can be recovered using the
-    remaining machines.
-* Low overhead
-    * There is minimal handshaking required to maintain
-    an active connection to the network.
-* Scalability
-    * It is easy and cost-efficient to bring a new node
-    into the network.
+* If a machine is compromised while offline, data will remain 
+uncompromised up to some user-defined level via usage of a 
+secret sharing scheme.
+* If a machine is compromised while online, even if shares can 
+be readily aggregated by an attacker, data on the network
+will still remain encrypted via password protection.
+* In the event that one or several machines stop communicating, 
+data can be recovered using the remaining machines.
+* There is minimal handshaking required to maintain an active 
+connection to the network.
+* It is easy and cost-efficient to bring a new node into the 
+network.
