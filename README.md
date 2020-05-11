@@ -5,7 +5,7 @@ a network of machines through which confidential files could be
 stored securely and redundantly. Every machine on the network
 serves dual roles as storage unit and potential client, 
 meaning it not only holds files, stores data, and responds
-to queries but also that it can issue queries of its own to
+to queries but also it can issue queries of its own to
 aggregrate shares from other machines.
 
 In general, the following principles hold:
