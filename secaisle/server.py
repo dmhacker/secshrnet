@@ -9,6 +9,8 @@ import time
 import os
 import socket
 import queue
+import configparser
+import argparse
 
 import crypto
 import sockutil
@@ -19,10 +21,10 @@ RECOVER_TIMEOUT_SECONDS = 10
 
 class Server:
 
-    def __init__(self, redis_host, redis_port, redis_password,
-                 share_dir, socket_file):
-        self.share_dir = share_dir
-        pathlib.Path(share_dir).mkdir(parents=True, exist_ok=True)
+    def __init__(self, config):
+        self.share_dir = os.path.expandvars(config['Shares']['Directory'])
+        pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
+        socket_file = os.path.expandvars(config['Socket']['File'])
         try:
             os.unlink(socket_file)
         except OSError:
@@ -31,9 +33,9 @@ class Server:
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(socket_file)
         self.redis = redis.Redis(
-            host=redis_host,
-            port=redis_port,
-            password=redis_password)
+            host=config['Redis']['Host'],
+            port=int(config['Redis']['Port']),
+            password=config['Redis']['Password'])
         self.pubsub = self.redis.pubsub()
         self.hid = str(uuid.uuid4())
         self.received_packets = queue.Queue()
@@ -252,15 +254,11 @@ class Server:
 
 
 if __name__ == '__main__':
-    if 'SHARE_DIRECTORY' in os.environ:
-        share_dir = os.environ['SHARE_DIRECTORY']
-    else:
-        share_dir = '{}/.secaisle/shares'.format(os.environ['HOME'])
-    if 'SOCKET_FILE' in os.environ:
-        socket_file = os.environ['SOCKET_FILE']
-    else:
-        socket_file = '/tmp/secaisle-socket'
-    Server(os.environ['REDIS_URL'],
-           int(os.environ['REDIS_PORT']),
-           os.environ['REDIS_DATABASE'],
-           share_dir, socket_file).run()
+    parser = argparse.ArgumentParser(
+        description='Run a secaisle hosting server.')
+    parser.add_argument('-c', '--config', default='default.ini',
+                        help='path to the server config file')
+    args = parser.parse_args()
+    config = configparser.ConfigParser()
+    config.read(args.config)
+    Server(config).run()
