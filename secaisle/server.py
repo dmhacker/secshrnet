@@ -1,4 +1,5 @@
 from loguru import logger
+from datetime import datetime
 
 import redis
 import pathlib
@@ -37,7 +38,8 @@ class Server:
         self.hid = str(uuid.uuid4())
         self.received_packets = queue.Queue()
         self.return_packets = queue.Queue()
-        logger.add("logs/secaisle_{}.log".format(self.hid))
+        dt_string = datetime.now().strftime("%m-%d-%Y_%H:%M:%S")
+        logger.add("logs/secaisle_{}.log".format(dt_string))
         logger.info("Session host ID is {}.".format(self.hid))
 
     def hosts(self):
@@ -67,7 +69,7 @@ class Server:
         shares = crypto.split_shares(plaintext, threshold, len(hkeys))
         for i, hid in enumerate(hkeys):
             packet = comms_pb2.Packet()
-            packet.type = comms_pb2.PacketType.STORE
+            packet.type = comms_pb2.PacketType.STORE_SHARE
             packet.sender = self.hid
             packet.tag = tag
             packet.share.index = shares[i].index
@@ -77,6 +79,32 @@ class Server:
             self.redis.publish('secaisle:host:' + hid,
                                packet.SerializeToString())
 
+    def _collect_return_packets(self, timeout_duration):
+        '''
+        Private method that blocks the current thread for at least
+        {timeout_duration} seconds, waiting for the packet processor
+        to funnel in return packets from other hosts.
+        '''
+        hkeys = self.hosts()
+        timestamp = time.time() + timeout_duration
+        packets = []
+        while True:
+            try:
+                timeout = timestamp - time.time()
+                if timeout <= 0:
+                    break
+                packet = self.return_packets.get(timeout=timeout)
+                if packet.sender in hkeys:
+                    packets.append(packet)
+                    hkeys.remove(packet.sender)
+                    if len(hkeys) == 0:
+                        break
+            except queue.Empty:
+                break
+        for bad_host in hkeys:
+            logger.warn("Host {} timed out.".format(bad_host))
+        return packets
+
     def combine_shares(self, tag):
         '''
         :param Server self: The active Server object
@@ -85,29 +113,13 @@ class Server:
         :rtype bytes:
         '''
         packet = comms_pb2.Packet()
-        packet.type = comms_pb2.PacketType.RECOVER
+        packet.type = comms_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
         packet.tag = tag
         self.redis.publish('secaisle:broadcast', packet.SerializeToString())
-        hkeys = self.hosts()
-        timestamp = time.time() + RECOVER_TIMEOUT_SECONDS
-        shares = []
-        while True:
-            try:
-                timeout = timestamp - time.time()
-                if timeout <= 0:
-                    break
-                packet = self.return_packets.get(timeout=timeout)
-                if packet.sender in hkeys:
-                    if packet.share_found:
-                        shares.append(packet.share)
-                    hkeys.remove(packet.sender)
-                    if len(hkeys) == 0:
-                        break
-            except queue.Empty:
-                break
-        for bad_host in hkeys:
-            logger.warn("Host {} timed out.".format(bad_host))
+        packets = self._collect_return_packets(RECOVER_TIMEOUT_SECONDS)
+        shares = [p.share for p in packets if
+                  p.type == comms_pb2.PacketType.RETURN_SHARE]
         return crypto.combine_shares(shares)
 
     def _packet_listener(self):
@@ -115,12 +127,6 @@ class Server:
         The packet listener subscribes to two channels on Redis, the broadcast
         channel and the host's private channel. It will continually poll for
         packets and forward them to the packet processor.
-
-        Processing is not done on the packet listener's thread. This is because
-        the listener can miss messages if it is not continuously polling.
-        Redis's pub/sub architecture is ephemeral, meaning that it doesn't
-        persist messages. Thus, if a message is missed, the listener can
-        never get it back nor even know about it.
         '''
         self.pubsub.subscribe('secaisle:broadcast')
         self.pubsub.subscribe('secaisle:host:' + self.hid)
@@ -139,14 +145,12 @@ class Server:
         '''
         The packet processor is responsible for dealing with incoming
         packets. It will wait on a blocking queue for packets to be
-        inserted from the packet listener. Every time a packet arrives,
-        it will be handled individually and in-order. This may entail
-        response packets being broadcasted back.
+        inserted from the packet listener thread.
         '''
         logger.info("Packet processing thread is now online.")
         while True:
             packet = self.received_packets.get()
-            if packet.type == comms_pb2.PacketType.STORE:
+            if packet.type == comms_pb2.PacketType.STORE_SHARE:
                 logger.info("Saving share for tag '{}' from host {}."
                             .format(packet.tag, packet.sender))
                 tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
@@ -155,29 +159,29 @@ class Server:
                                    .format(tagpath))
                 with open(tagpath, 'wb') as f:
                     f.write(packet.share.SerializeToString())
-            elif packet.type == comms_pb2.PacketType.RECOVER:
+            elif packet.type == comms_pb2.PacketType.RECOVER_SHARE:
                 tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
                 response = comms_pb2.Packet()
-                response.type = comms_pb2.PacketType.RETURN
                 response.sender = self.hid
-                response.share_found = os.path.exists(tagpath)
-                if response.share_found:
+                if os.path.exists(tagpath):
+                    response.type = comms_pb2.PacketType.RETURN_SHARE
                     with open(tagpath, 'rb') as f:
                         response.share.ParseFromString(f.read())
                     logger.info("Sending a '{}' share to host {}."
                                 .format(packet.tag, packet.sender))
                 else:
+                    response.type = comms_pb2.PacketType.NO_SHARE
                     logger.warning("Unable to send a '{}' share to host {}."
                                    .format(packet.tag, packet.sender))
                 self.redis.publish('secaisle:host:' + packet.sender,
                                    response.SerializeToString())
-            elif packet.type == comms_pb2.PacketType.RETURN:
-                if packet.share_found:
-                    logger.info("Host {} gave us their share."
-                                .format(packet.sender, packet.tag))
-                else:
-                    logger.warning("Host {} did not have a share."
-                                   .format(packet.sender))
+            elif packet.type == comms_pb2.PacketType.RETURN_SHARE:
+                logger.info("Host {} gave us their share."
+                            .format(packet.sender, packet.tag))
+                self.return_packets.put(packet)
+            elif packet.type == comms_pb2.PacketType.NO_SHARE:
+                logger.warning("Host {} did not have a share."
+                               .format(packet.sender))
                 self.return_packets.put(packet)
             else:
                 logger.warning("Unknown packet type {}.".format(

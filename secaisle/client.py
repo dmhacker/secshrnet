@@ -48,7 +48,9 @@ class Client:
 if __name__ == '__main__':
     client = Client()
     print(client.num_hosts())
-    client.split('test', ('a' * 20000).encode(), 1)
-    for _ in range(100):
-        print(client.combine('test'))
-    print(client.combine('test2'))
+    client.split('test1', ('a' * 201).encode(), 1)
+    client.split('test2', ('z' * 389).encode(), 1)
+    for _ in range(2):
+        print(client.combine('test1'))
+        print(client.combine('test2'))
+    print(client.combine('test3'))

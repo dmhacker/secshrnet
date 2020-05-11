@@ -10,9 +10,10 @@ message Share {
 }
 
 enum PacketType {
-    STORE = 0;
-    RECOVER = 1;
-    RETURN = 2;
+    STORE_SHARE = 0;
+    RECOVER_SHARE = 1;
+    RETURN_SHARE = 2;
+    NO_SHARE = 3;
 }
 
 message Packet {
@@ -20,7 +21,6 @@ message Packet {
     string sender = 2;
     string tag = 4;
     Share share = 5;
-    bool share_found = 6;
 }
 
 enum CommandType {
