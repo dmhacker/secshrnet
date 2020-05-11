@@ -1,9 +1,8 @@
 # secret-aisle
 
 The secret-aisle project is an attempt at creating
-a system through which confidential files could be
-stored securely and redundantly amongst a network of 
-machines. See the following goals:
+a network of servers through which confidential files could be
+stored securely and redundantly. See the following goals:
 
 * Be able to upload, split, and distribute data to all 
 other machines from any one machine in the network.
