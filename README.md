@@ -19,7 +19,7 @@ In general, we try to stay true to the following principles:
     will still remain encrypted via password protection.
 * Fault tolerance
     * In the event that one or several machines stop
-    communicating, data can be receovered using the
+    communicating, data can be recovered using the
     remaining machines.
 * Low overhead
     * There is minimal handshaking required to maintain
