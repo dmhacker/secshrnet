@@ -15,21 +15,21 @@ import sockutil
 import comms_pb2
 
 RECOVER_TIMEOUT_SECONDS = 10
-SOCKET_FILE = '/tmp/secaisle-socket'
 
 
 class Server:
 
-    def __init__(self, share_dir, redis_host, redis_port, redis_password):
+    def __init__(self, redis_host, redis_port, redis_password,
+                 share_dir, socket_file):
         self.share_dir = share_dir
         pathlib.Path(share_dir).mkdir(parents=True, exist_ok=True)
         try:
-            os.unlink(SOCKET_FILE)
+            os.unlink(socket_file)
         except OSError:
-            if os.path.exists(SOCKET_FILE):
-                raise ValueError("Socket address {} is already in use.")
+            if os.path.exists(socket_file):
+                raise ValueError("Socket file already in use.")
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.bind(SOCKET_FILE)
+        self.sock.bind(socket_file)
         self.redis = redis.Redis(
             host=redis_host,
             port=redis_port,
@@ -256,6 +256,11 @@ if __name__ == '__main__':
         share_dir = os.environ['SHARE_DIRECTORY']
     else:
         share_dir = '{}/.secaisle/shares'.format(os.environ['HOME'])
-    Server(share_dir, os.environ['REDIS_URL'],
+    if 'SOCKET_FILE' in os.environ:
+        socket_file = os.environ['SOCKET_FILE']
+    else:
+        socket_file = '/tmp/secaisle-socket'
+    Server(os.environ['REDIS_URL'],
            int(os.environ['REDIS_PORT']),
-           os.environ['REDIS_DATABASE']).run()
+           os.environ['REDIS_DATABASE'],
+           share_dir, socket_file).run()
