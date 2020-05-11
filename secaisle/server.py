@@ -16,13 +16,13 @@ import comms_pb2
 
 RECOVER_TIMEOUT_SECONDS = 10
 SOCKET_FILE = '/tmp/secaisle-socket'
-SHARE_DIRECTORY = '{}/.secaisle/shares'.format(os.environ['HOME'])
 
 
 class Server:
 
-    def __init__(self, redis_host, redis_port, redis_password):
-        pathlib.Path(SHARE_DIRECTORY).mkdir(parents=True, exist_ok=True)
+    def __init__(self, share_dir, redis_host, redis_port, redis_password):
+        self.share_dir = share_dir
+        pathlib.Path(share_dir).mkdir(parents=True, exist_ok=True)
         try:
             os.unlink(SOCKET_FILE)
         except OSError:
@@ -150,14 +150,14 @@ class Server:
             if packet.type == comms_pb2.PacketType.STORE_SHARE:
                 logger.info("Saving share for tag '{}' from host {}."
                             .format(packet.tag, packet.sender))
-                tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
+                tagpath = os.path.join(self.share_dir, packet.tag)
                 if os.path.exists(tagpath):
                     logger.warning('{} is being overwritten.'
                                    .format(tagpath))
                 with open(tagpath, 'wb') as f:
                     f.write(packet.share.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RECOVER_SHARE:
-                tagpath = os.path.join(SHARE_DIRECTORY, packet.tag)
+                tagpath = os.path.join(self.share_dir, packet.tag)
                 response = comms_pb2.Packet()
                 response.sender = self.hid
                 if os.path.exists(tagpath):
@@ -252,6 +252,10 @@ class Server:
 
 
 if __name__ == '__main__':
-    Server(os.environ['REDIS_URL'],
+    if 'SHARE_DIRECTORY' in os.environ:
+        share_dir = os.environ['SHARE_DIRECTORY']
+    else:
+        share_dir = '{}/.secaisle/shares'.format(os.environ['HOME'])
+    Server(share_dir, os.environ['REDIS_URL'],
            int(os.environ['REDIS_PORT']),
            os.environ['REDIS_DATABASE']).run()
