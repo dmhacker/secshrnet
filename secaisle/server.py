@@ -64,8 +64,7 @@ class Server:
         '''
         hkeys = self.hosts()
         if threshold > len(hkeys):
-            raise ValueError('Threshold must not be greater than \
-                             the host count.')
+            return "Threshold must not be greater than the host count."
         shares = crypto.split_shares(plaintext, threshold, len(hkeys))
         for i, hid in enumerate(hkeys):
             packet = comms_pb2.Packet()
@@ -78,6 +77,7 @@ class Server:
             packet.share.ciphertext_hash = shares[i].ciphertext_hash
             self.redis.publish('secaisle:host:' + hid,
                                packet.SerializeToString())
+        return None
 
     def _collect_return_packets(self, timeout_duration):
         '''
@@ -102,7 +102,7 @@ class Server:
             except queue.Empty:
                 break
         for bad_host in hkeys:
-            logger.warn("Host {} timed out.".format(bad_host))
+            logger.warning("Host {} timed out.".format(bad_host))
         return packets
 
     def combine_shares(self, tag):
@@ -138,8 +138,8 @@ class Server:
                     packet.ParseFromString(message['data'])
                     self.received_packets.put(packet)
                 except Exception:
-                    logger.warn("Unparsable packet on channel {}."
-                                .format(message['channel']))
+                    logger.warning("Unparsable packet on channel {}."
+                                   .format(message['channel']))
 
     def _packet_processor(self):
         '''
@@ -211,29 +211,25 @@ class Server:
                     elif command.type == comms_pb2.CommandType.SPLIT:
                         logger.info("SPLIT '{}' command received."
                                     .format(command.tag))
-                        try:
-                            self.split_plaintext(command.tag,
-                                                 command.plaintext,
-                                                 command.threshold)
+                        error = self.split_plaintext(command.tag,
+                                                     command.plaintext,
+                                                     command.threshold)
+                        if error is None:
                             response.success = True
-                        except Exception as e:
+                        else:
                             response.success = False
-                            response.error = str(e)
+                            response.error = error
                     elif command.type == comms_pb2.CommandType.COMBINE:
                         logger.info("COMBINE '{}' command received."
                                     .format(command.tag))
-                        try:
-                            message = self.combine_shares(command.tag)
-                            response.success = message is not None
-                            if response.success:
-                                response.plaintext = message
-                            else:
-                                response.error = ("Could not acquire enough "
-                                                  "shares to reconstruct "
-                                                  "message.")
-                        except Exception as e:
-                            response.success = False
-                            response.error = str(e)
+                        message = self.combine_shares(command.tag)
+                        response.success = message is not None
+                        if response.success:
+                            response.plaintext = message
+                        else:
+                            response.error = ("Could not acquire enough "
+                                              "shares to reconstruct "
+                                              "message.")
                     else:
                         response.success = False
                         response.error = ("Unknown command type {}."
