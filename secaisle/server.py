@@ -11,12 +11,17 @@ import socket
 import queue
 import configparser
 import argparse
+import base64
 
 import crypto
 import sockutil
 import comms_pb2
 
 RECOVER_TIMEOUT_SECONDS = 10
+
+
+def sanitize_tag(raw_tag):
+    return base64.b64encode(raw_tag.encode()).decode()
 
 
 class Server:
@@ -152,14 +157,16 @@ class Server:
             if packet.type == comms_pb2.PacketType.STORE_SHARE:
                 logger.info("Saving share for tag '{}' from host {}."
                             .format(packet.tag, packet.sender))
-                tagpath = os.path.join(self.share_dir, packet.tag)
+                tagpath = os.path.join(self.share_dir,
+                                       sanitize_tag(packet.tag))
                 if os.path.exists(tagpath):
                     logger.warning('{} is being overwritten.'
                                    .format(tagpath))
                 with open(tagpath, 'wb') as f:
                     f.write(packet.share.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RECOVER_SHARE:
-                tagpath = os.path.join(self.share_dir, packet.tag)
+                tagpath = os.path.join(self.share_dir,
+                                       sanitize_tag(packet.tag))
                 response = comms_pb2.Packet()
                 response.sender = self.hid
                 if os.path.exists(tagpath):

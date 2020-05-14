@@ -91,7 +91,7 @@ def combine_shares(shares):
     :rtype: bytes
     '''
     if not shares:
-        raise ShareError("No shares provided for message reconstruction.")
+        raise ShareError("No shares for the given tag.")
     hashes = [share.ciphertext_hash for share in shares]
     max_hash, _ = Counter(hashes).most_common(1)[0]
     majority_shares = [share for share in shares if
