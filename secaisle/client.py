@@ -1,5 +1,6 @@
 import socket
 import argparse
+import sys
 
 import comms_pb2
 import sockutil
@@ -45,9 +46,27 @@ class Client:
         return response.plaintext
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Send commands to a local secaisle hosting server.')
-    parser.add_argument('tag', type=str, help='unique tag location')
+    parser.add_argument('-s', '--split', action='store_true',
+                        help='split a file, upload it to the network')
+    parser.add_argument('-c', '--combine', action='store_true',
+                        help='combine data in the network, store to file')
+    parser.add_argument('tag', help='unique tag location')
+    parser.add_argument('file', help='file to upload from or download to')
     args = parser.parse_args()
-    print(args)
+    if args.split == args.combine:
+        print("Please specify either --split or --combine.", file=sys.stderr)
+        return
+    client = Client()
+    num_hosts = client.num_hosts()
+    print("Server is online. {} hosts on the network".format(num_hosts))
+    if args.split:
+        pass
+    else:
+        pass
+
+
+if __name__ == '__main__':
+    main()

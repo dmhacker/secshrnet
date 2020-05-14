@@ -253,7 +253,7 @@ class Server:
         self._command_processor()
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Run a secaisle hosting server.')
     parser.add_argument('-c', '--config', default='default.ini',
@@ -262,3 +262,7 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read(args.config)
     Server(config).run()
+
+
+if __name__ == '__main__':
+    main()
