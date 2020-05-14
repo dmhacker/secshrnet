@@ -1,5 +1,5 @@
-
 import socket
+import argparse
 
 import comms_pb2
 import sockutil
@@ -46,11 +46,8 @@ class Client:
 
 
 if __name__ == '__main__':
-    client = Client()
-    print(client.num_hosts())
-    client.split('test1', ('a' * 201).encode(), 1)
-    client.split('test2', ('z' * 389).encode(), 1)
-    for _ in range(2):
-        print(client.combine('test1'))
-        print(client.combine('test2'))
-    print(client.combine('test3'))
+    parser = argparse.ArgumentParser(
+        description='Send commands to a local secaisle hosting server.')
+    parser.add_argument('tag', type=str, help='unique tag location')
+    args = parser.parse_args()
+    print(args)

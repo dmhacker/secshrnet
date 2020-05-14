@@ -10,10 +10,10 @@ aggregrate shares from other machines.
 
 In general, the following principles hold:
 
-* If a machine is compromised while offline, data will remain 
+* If a specific file is compromised, data will remain 
 uncompromised up to some user-defined level via usage of a 
 secret sharing scheme.
-* If a machine is compromised while online, even if shares can 
+* If an entire machine is compromised, even if shares can 
 be readily aggregated by an attacker, data on the network
 will still remain encrypted via password protection.
 * In the event that one or several machines stop communicating, 
