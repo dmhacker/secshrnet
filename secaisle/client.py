@@ -58,6 +58,7 @@ def main():
     args = parser.parse_args()
     if args.split == args.combine:
         print("Please specify either --split or --combine.", file=sys.stderr)
+        sys.exit(1)
         return
     client = Client()
     num_hosts = client.num_hosts()
