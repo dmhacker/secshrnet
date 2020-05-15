@@ -27,9 +27,10 @@ def sanitize_tag(raw_tag):
 class Server:
 
     def __init__(self, config):
-        self.share_dir = os.path.expandvars(config['Shares']['Directory'])
+        self.share_dir = os.path.join(
+            os.path.expandvars(config['Host']['Root']), 'shares')
         pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
-        socket_file = os.path.expandvars(config['Socket']['File'])
+        socket_file = os.path.expandvars(config['Host']['Socket'])
         try:
             os.unlink(socket_file)
         except OSError:

@@ -96,7 +96,7 @@ def main():
         return
     client = Client(args.socket)
     num_hosts = client.num_hosts()
-    print("Server is online. {} hosts on the network".format(num_hosts))
+    print("Server is online. {} hosts on the network.".format(num_hosts))
     try:
         if args.split:
             threshold = read_threshold(num_hosts)
