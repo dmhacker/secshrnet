@@ -24,7 +24,32 @@ are unrelated.
 
 ## Setup
 
-TODO
+Install using `pip` via:
+
+```
+pip install secshrnet
+```
+
+To run a server, use:
+
+```
+secshrnetd --config <CONFIG>
+```
+
+The configuration file specifies which Redis instance to connect
+to. Please see [example.ini](https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/example.ini) for a example configuration.
+If a configuration file isn't explicitly provided, `secshrnetd`
+will use **default.ini**.
+
+Alternatively, to run a client, use:
+
+```
+secshrnetc --config <CONFIG> [-s/-c] <TAG> <FILE>
+```
+
+`-s` stands for split, which splits and distributes the file over
+the network. `-c` stands for combine, which recombines shares from
+different servers to recreate the original file.
 
 ## Architecture
 
