@@ -14,10 +14,6 @@ from . import host
 RECOVER_TIMEOUT_SECONDS = 10
 
 
-class ClientError(Exception):
-    pass
-
-
 class Client(host.Host):
 
     def __init__(self, config):
@@ -149,12 +145,12 @@ def main():
             password = read_password(args.tag)
             pt = crypto.decrypt_ciphertext(ct, password)
             if pt is None:
-                raise ClientError("Incorrect password.")
+                raise crypto.ShareError("Incorrect password.")
             with open(args.file, 'wb') as f:
                 f.write(pt)
             print("Data for tag '{}' downloaded into {}."
                   .format(args.tag, args.file))
-    except ClientError as e:
+    except crypto.ShareError as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
 
