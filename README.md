@@ -19,7 +19,7 @@ network.
 ## Architecture
 
 <p align="center">
-  <img width="100" height="100" src="https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/architecture.png">
+  <img width="300" height="300" src="https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/architecture.png">
 </p>
 
 ## Setup
