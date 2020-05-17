@@ -14,6 +14,8 @@ enum PacketType {
     RECOVER_SHARE = 1;
     RETURN_SHARE = 2;
     NO_SHARE = 3;
+    LIST_TAGS = 4;
+    RETURN_TAGS = 5;
 }
 
 message Packet {
@@ -21,4 +23,5 @@ message Packet {
     string sender = 2;
     string tag = 4;
     Share share = 5;
+    string hex_tags = 6;
 }

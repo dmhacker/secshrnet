@@ -10,7 +10,7 @@ from . import comms_pb2
 from . import host
 
 
-def sanitize_tag(raw_tag):
+def encode_tag(raw_tag):
     return base64.b16encode(raw_tag.encode()).decode()
 
 
@@ -27,14 +27,14 @@ class Server(host.Host):
         if packet.type == comms_pb2.PacketType.STORE_SHARE:
             logger.info("Saving share for tag '{}' from host {}."
                         .format(packet.tag, packet.sender))
-            tagpath = os.path.join(self.share_dir, sanitize_tag(packet.tag))
+            tagpath = os.path.join(self.share_dir, encode_tag(packet.tag))
             if os.path.exists(tagpath):
                 logger.warning('{} is being overwritten.'.format(tagpath))
             with open(tagpath, 'wb') as f:
                 f.write(packet.share.SerializeToString())
         elif packet.type == comms_pb2.PacketType.RECOVER_SHARE:
             tagpath = os.path.join(self.share_dir,
-                                   sanitize_tag(packet.tag))
+                                   encode_tag(packet.tag))
             response = comms_pb2.Packet()
             response.sender = self.hid
             if os.path.exists(tagpath):
@@ -47,17 +47,22 @@ class Server(host.Host):
                 response.type = comms_pb2.PacketType.NO_SHARE
                 logger.info("No '{}' share to send to host {}."
                             .format(packet.tag, packet.sender))
-            self.redis.publish('secshrnet:client:' + packet.sender,
-                               response.SerializeToString())
-        elif packet.type == comms_pb2.PacketType.RETURN_SHARE:
-            logger.warning("Ignoring RETURN_SHARE packet from host {}."
-                           .format(packet.sender))
-        elif packet.type == comms_pb2.PacketType.NO_SHARE:
-            logger.warning("Ignoring NO_SHARE packet from host {}."
-                           .format(packet.sender))
+            self.send_packet('secshrnet:client:' + packet.sender,
+                             response.SerializeToString())
+        elif packet.type == comms_pb2.PacketType.LIST_TAGS:
+            (_, _, filenames) in next(os.walk(self.share_dir))
+            response = comms_pb2.Packet()
+            response.sender = self.hid
+            response.type = comms_pb2.PacketType.RETURN_TAGS
+            response.hex_tags = ','.join(filenames)
+            self.send_packet('secshrnet:client:' + packet.sender,
+                             response.SerializeToString())
         else:
-            logger.warning("Unknown packet type {}.".format(
-                packet.type))
+            logger.warning("Unknown packet type {} from host {}.".format(
+                packet.type, packet.sender))
+
+    def run():
+        super().run(block=True)
 
 
 def main():

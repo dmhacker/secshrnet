@@ -5,79 +5,20 @@ import argparse
 import sys
 import getpass
 import queue
+import itertools
 import time
+import base64
 
 from . import crypto
 from . import comms_pb2
 from . import host
 
 RECOVER_TIMEOUT_SECONDS = 10
+LIST_TIMEOUT_SECONDS = 10
 
 
-class Client(host.Host):
-
-    def __init__(self, config):
-        super().__init__('secshrnet:client:', config)
-        self.collected_packets = None
-        logger.remove(handler_id=None)
-
-    def servers(self):
-        return self.connected_hosts('secshrnet:server:')
-
-    def split(self, tag, plaintext, threshold):
-        servset = self.servers()
-        shares = crypto.split_shares(plaintext, threshold, len(servset))
-        for i, hid in enumerate(servset):
-            packet = comms_pb2.Packet()
-            packet.type = comms_pb2.PacketType.STORE_SHARE
-            packet.sender = self.hid
-            packet.tag = tag
-            packet.share.index = shares[i].index
-            packet.share.key_share = shares[i].key_share
-            packet.share.ciphertext = shares[i].ciphertext
-            packet.share.ciphertext_hash = shares[i].ciphertext_hash
-            self.redis.publish('secshrnet:server:' + hid,
-                               packet.SerializeToString())
-
-    def _collect_packets(self, timeout_duration):
-        servset = self.servers()
-        timestamp = time.time() + timeout_duration
-        packets = []
-        self.collected_packets = queue.Queue()
-        while True:
-            try:
-                timeout = timestamp - time.time()
-                if timeout <= 0:
-                    break
-                packet = self.collected_packets.get(timeout=timeout)
-                if packet.sender in servset:
-                    packets.append(packet)
-                    servset.remove(packet.sender)
-                    if len(servset) == 0:
-                        break
-            except queue.Empty:
-                break
-        self.collected_packets = None
-        return packets
-
-    def recombine(self, tag):
-        packet = comms_pb2.Packet()
-        packet.type = comms_pb2.PacketType.RECOVER_SHARE
-        packet.sender = self.hid
-        packet.tag = tag
-        for hid in self.servers():
-            self.redis.publish('secshrnet:server:' + hid,
-                               packet.SerializeToString())
-        packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
-        shares = [p.share for p in packets if
-                  p.type == comms_pb2.PacketType.RETURN_SHARE]
-        return crypto.combine_shares(shares)
-
-    def handle_packet(self, packet):
-        if packet.type == comms_pb2.PacketType.RETURN_SHARE or \
-                packet.type == comms_pb2.PacketType.NO_SHARE:
-            if self.collected_packets:
-                self.collected_packets.put(packet)
+def decode_tag(hex_tag):
+    return base64.b16decode(hex_tag.encode()).decode()
 
 
 def read_threshold(num_hosts):
@@ -105,13 +46,100 @@ def read_password(tag):
                                           .format(tag)).encode('utf-8'))
 
 
+class Client(host.Host):
+
+    def __init__(self, config):
+        super().__init__('secshrnet:client:', config)
+        self.collected_packets = None
+        logger.remove(handler_id=None)
+
+    def handle_packet(self, packet):
+        if packet.type == comms_pb2.PacketType.RETURN_SHARE or \
+                packet.type == comms_pb2.PacketType.NO_SHARE or \
+                packet.type == comms_pb2.PacketType.RETURN_TAGS:
+            if self.collected_packets:
+                self.collected_packets.put(packet)
+
+    def servers(self):
+        return self.connected_hosts('secshrnet:server:')
+
+    def _collect_packets(self, timeout_duration):
+        servset = self.servers()
+        timestamp = time.time() + timeout_duration
+        packets = []
+        self.collected_packets = queue.Queue()
+        while True:
+            try:
+                timeout = timestamp - time.time()
+                if timeout <= 0:
+                    break
+                packet = self.collected_packets.get(timeout=timeout)
+                if packet.sender in servset:
+                    packets.append(packet)
+                    servset.remove(packet.sender)
+                    if len(servset) == 0:
+                        break
+            except queue.Empty:
+                break
+        self.collected_packets = None
+        return packets
+
+    def split(self, tag, plaintext, threshold):
+        servset = self.servers()
+        shares = crypto.split_shares(plaintext, threshold, len(servset))
+        for i, hid in enumerate(servset):
+            packet = comms_pb2.Packet()
+            packet.type = comms_pb2.PacketType.STORE_SHARE
+            packet.sender = self.hid
+            packet.tag = tag
+            packet.share.index = shares[i].index
+            packet.share.key_share = shares[i].key_share
+            packet.share.ciphertext = shares[i].ciphertext
+            packet.share.ciphertext_hash = shares[i].ciphertext_hash
+            self.send_packet('secshrnet:server:' + hid,
+                             packet.SerializeToString())
+
+    def recombine(self, tag):
+        packet = comms_pb2.Packet()
+        packet.type = comms_pb2.PacketType.RECOVER_SHARE
+        packet.sender = self.hid
+        packet.tag = tag
+        for hid in self.servers():
+            self.send_packet('secshrnet:server:' + hid,
+                             packet.SerializeToString())
+        packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
+        shares = [p.share for p in packets if
+                  p.type == comms_pb2.PacketType.RETURN_SHARE]
+        return crypto.combine_shares(shares)
+
+    def list_tags(self):
+        packet = comms_pb2.Packet()
+        packet.type = comms_pb2.PacketType.LIST_TAGS
+        packet.sender = self.hid
+        for hid in self.servers():
+            self.send_packet('secshrnet:server:' + hid,
+                             packet.SerializeToString())
+        packets = self._collect_packets(LIST_TIMEOUT_SECONDS)
+        hex_tags = [p.tag for p in packets if
+                    p.type == comms_pb2.PacketType.RETURN_TAGS]
+        tag_groups = [tag.split(',') for tag in hex_tags]
+        hex_tags = set(itertools.chain(*tag_groups))
+        return {decode_tag(tag) for tag in hex_tags}
+
+    def run():
+        super().run(block=False)
+
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Send to and receive from a secshrnet network.')
+        description='Run a secshrnet client.')
     parser.add_argument('-s', '--split', action='store_true',
                         help='split a file, upload it to the network')
     parser.add_argument('-c', '--combine', action='store_true',
                         help='combine data in the network, store to file')
+    parser.add_argument('-l', '--list-tags', action='store_true',
+                        help='list all available tags in the network')
     parser.add_argument('--config', default='default.ini',
                         help='path to the configuration file')
     parser.add_argument('tag', help='unique tag location')
