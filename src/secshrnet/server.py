@@ -6,8 +6,8 @@ import configparser
 import argparse
 import base64
 
-import comms_pb2
-import host
+from . import comms_pb2
+from . import host
 
 
 def sanitize_tag(raw_tag):

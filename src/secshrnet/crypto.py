@@ -4,7 +4,7 @@ from Crypto.Protocol.SecretSharing import Shamir
 from Crypto.Hash import BLAKE2s
 from collections import Counter
 
-import comms_pb2
+from . import comms_pb2
 
 
 class ShareError(Exception):

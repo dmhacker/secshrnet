@@ -17,7 +17,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='secshrnet',  # Required
-    version='0.1',  # Required
+    version='0.1.1',  # Required
     description='Secret sharing over a distributed network',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)

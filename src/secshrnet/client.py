@@ -4,14 +4,12 @@ import configparser
 import argparse
 import sys
 import getpass
-import redis
-import uuid
 import queue
 import time
 
-import crypto
-import comms_pb2
-import host
+from . import crypto
+from . import comms_pb2
+from . import host
 
 RECOVER_TIMEOUT_SECONDS = 10
 

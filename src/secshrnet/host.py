@@ -7,7 +7,7 @@ import uuid
 import queue
 import threading
 
-import comms_pb2
+from . import comms_pb2
 
 
 class Host(ABC):
