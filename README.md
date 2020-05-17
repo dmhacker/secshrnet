@@ -68,10 +68,6 @@ unique channel on Redis, and other hosts that want to send message
 to that host can simply route the packet through the unique channel.
 Host discovery is done via channel pattern matching.
 
-<p align="center">
-  <img width="300" height="300" src="https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/architecture.png">
-</p>
-
 ### Cryptography
 
 For password protection, passwords are hashed using BLAKE2S to produce
