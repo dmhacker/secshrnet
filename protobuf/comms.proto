@@ -22,23 +22,3 @@ message Packet {
     string tag = 4;
     Share share = 5;
 }
-
-enum CommandType {
-    NUM_HOSTS = 0;
-    SPLIT = 1;
-    COMBINE = 2;
-}
-
-message Command {
-    CommandType type = 1;
-    string tag = 2;
-    bytes plaintext = 3;
-    uint32 threshold = 4;
-}
-
-message Response {
-    bool success = 1;
-    string error = 2;
-    uint32 num_hosts = 3;
-    bytes plaintext = 4;
-}

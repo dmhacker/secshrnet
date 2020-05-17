@@ -1,56 +1,89 @@
-import socket
+from loguru import logger
+
+import configparser
 import argparse
 import sys
-import os
+import getpass
+import redis
+import uuid
+import queue
+import time
 
 import crypto
 import comms_pb2
-import sockutil
-import getpass
+import host
 
-SOCKET_FILE = '/tmp/secshrnet-0-socket'
+RECOVER_TIMEOUT_SECONDS = 10
 
 
 class ClientError(Exception):
     pass
 
 
-class Client:
+class Client(host.Host):
 
-    def __init__(self, sockfile):
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(sockfile)
+    def __init__(self, config):
+        super().__init__('secshrnet:client:', config)
+        self.collected_packets = None
+        logger.remove(handler_id=None)
 
-    def _validate_response(self):
-        response = comms_pb2.Response()
-        response.ParseFromString(sockutil.recv_msg(self.sock))
-        if not response.success:
-            raise ClientError(response.error)
-        return response
-
-    def num_hosts(self):
-        command = comms_pb2.Command()
-        command.type = comms_pb2.CommandType.NUM_HOSTS
-        sockutil.send_msg(self.sock, command.SerializeToString())
-        response = self._validate_response()
-        return response.num_hosts
+    def servers(self):
+        return self.connected_hosts('secshrnet:server:')
 
     def split(self, tag, plaintext, threshold):
-        command = comms_pb2.Command()
-        command.type = comms_pb2.CommandType.SPLIT
-        command.tag = tag
-        command.plaintext = plaintext
-        command.threshold = threshold
-        sockutil.send_msg(self.sock, command.SerializeToString())
-        self._validate_response()
+        servset = self.servers()
+        shares = crypto.split_shares(plaintext, threshold, len(servset))
+        for i, hid in enumerate(servset):
+            packet = comms_pb2.Packet()
+            packet.type = comms_pb2.PacketType.STORE_SHARE
+            packet.sender = self.hid
+            packet.tag = tag
+            packet.share.index = shares[i].index
+            packet.share.key_share = shares[i].key_share
+            packet.share.ciphertext = shares[i].ciphertext
+            packet.share.ciphertext_hash = shares[i].ciphertext_hash
+            self.redis.publish('secshrnet:server:' + hid,
+                               packet.SerializeToString())
 
-    def combine(self, tag):
-        command = comms_pb2.Command()
-        command.type = comms_pb2.CommandType.COMBINE
-        command.tag = tag
-        sockutil.send_msg(self.sock, command.SerializeToString())
-        response = self._validate_response()
-        return response.plaintext
+    def _collect_packets(self, timeout_duration):
+        servset = self.servers()
+        timestamp = time.time() + timeout_duration
+        packets = []
+        self.collected_packets = queue.Queue()
+        while True:
+            try:
+                timeout = timestamp - time.time()
+                if timeout <= 0:
+                    break
+                packet = self.collected_packets.get(timeout=timeout)
+                if packet.sender in servset:
+                    packets.append(packet)
+                    servset.remove(packet.sender)
+                    if len(servset) == 0:
+                        break
+            except queue.Empty:
+                break
+        self.collected_packets = None
+        return packets
+
+    def recombine(self, tag):
+        packet = comms_pb2.Packet()
+        packet.type = comms_pb2.PacketType.RECOVER_SHARE
+        packet.sender = self.hid
+        packet.tag = tag
+        for hid in self.servers():
+            self.redis.publish('secshrnet:server:' + hid,
+                               packet.SerializeToString())
+        packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
+        shares = [p.share for p in packets if
+                  p.type == comms_pb2.PacketType.RETURN_SHARE]
+        return crypto.combine_shares(shares)
+
+    def handle_packet(self, packet):
+        if packet.type == comms_pb2.PacketType.RETURN_SHARE or \
+                packet.type == comms_pb2.PacketType.NO_SHARE:
+            if self.collected_packets:
+                self.collected_packets.put(packet)
 
 
 def read_threshold(num_hosts):
@@ -80,13 +113,13 @@ def read_password(tag):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Send commands to a local secshrnet hosting server.')
+        description='Send to and receive from a secshrnet network.')
     parser.add_argument('-s', '--split', action='store_true',
                         help='split a file, upload it to the network')
     parser.add_argument('-c', '--combine', action='store_true',
                         help='combine data in the network, store to file')
-    parser.add_argument('--socket', default=SOCKET_FILE,
-                        help='the socket that the server is running on')
+    parser.add_argument('--config', default='default.ini',
+                        help='path to the configuration file')
     parser.add_argument('tag', help='unique tag location')
     parser.add_argument('file', help='file to upload from or download to')
     args = parser.parse_args()
@@ -94,12 +127,18 @@ def main():
         print("Please specify either --split or --combine.", file=sys.stderr)
         sys.exit(1)
         return
-    client = Client(args.socket)
-    num_hosts = client.num_hosts()
-    print("Server is online. {} hosts on the network.".format(num_hosts))
+    config = configparser.ConfigParser()
+    config.read(args.config)
+    client = Client(config)
+    client.run(block=False)
+    num_servers = len(client.servers())
+    if num_servers == 0:
+        print("No servers online.")
+        return
+    print("Found {} servers on the network.".format(num_servers))
     try:
         if args.split:
-            threshold = read_threshold(num_hosts)
+            threshold = read_threshold(num_servers)
             password = read_password(args.tag)
             with open(args.file, 'rb') as f:
                 pt = f.read()
@@ -108,7 +147,7 @@ def main():
             print("Contents of {} uploaded to tag '{}'."
                   .format(args.file, args.tag))
         else:
-            ct = client.combine(args.tag)
+            ct = client.recombine(args.tag)
             password = read_password(args.tag)
             pt = crypto.decrypt_ciphertext(ct, password)
             if pt is None:
