@@ -38,8 +38,8 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='secret sharing network cryptography',  # Optional
-    package_dir={'': 'src'},  # Optional
-    packages=find_packages(where='src'),  # Required
+    package_dir={'': '.'},  # Optional
+    packages=find_packages(where='.'),  # Required
     python_requires='>=3.5, <4',
     install_requires=['pycryptodome', 'protobuf', 'redis', 'loguru'],  # Optional
     # For example, the following would provide a command called `sample` which

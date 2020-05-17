@@ -130,7 +130,6 @@ class Client(host.Host):
         super().run(block=False)
 
 
-
 def main():
     parser = argparse.ArgumentParser(
         description='Run a secshrnet client.')
@@ -138,8 +137,6 @@ def main():
                         help='split a file, upload it to the network')
     parser.add_argument('-c', '--combine', action='store_true',
                         help='combine data in the network, store to file')
-    parser.add_argument('-l', '--list-tags', action='store_true',
-                        help='list all available tags in the network')
     parser.add_argument('--config', default='default.ini',
                         help='path to the configuration file')
     parser.add_argument('tag', help='unique tag location')
