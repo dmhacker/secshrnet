@@ -33,6 +33,8 @@ network, at any point in time, there are some amount of participating
 host machines, each of which can be grouped into one of two categories:
 servers and clients.
 
+### Servers
+
 Servers are the backbone of the network. They listen over the network
 for commands from clients and perform one of two actions:
 1. If a client sends them a share identified by some tag, they store 
@@ -42,6 +44,8 @@ stored locally that matches that tag.
 Servers perform little computational work themselves; they primarily
 act as trusted storage units that the client can divy out shares to.
 
+### Clients
+
 Clients are the users of the network. They can issue commands to 
 servers and send shares to servers on the network for storage. The
 client performs all of the cryptographic work needed to protect
@@ -49,13 +53,14 @@ their data. When a client wants to send some data over the network,
 it will:
 1. Encrypt the data using some password.
 2. Split the encrypted data into many shares, one for each server.
-The minimum number of shares needed to reconstruct the message is
-provided by the user.
 3. For every online server, send it a unique share and its 
 corresponding tag.
+
 Alternatively, a client can reconstruct the data stored at some tag 
 by asking every server if it has a share associated with the tag. If
 the server has a share, it will send it back to the client.
+
+### Communication
 
 All communication over this network is done over a centralized Redis
 server using Redis's pub/sub interface. Every host subscribes to a 
@@ -67,11 +72,13 @@ Host discovery is done via channel pattern matching.
   <img width="300" height="300" src="https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/architecture.png">
 </p>
 
-Lastly, the following cryptographic primitives are used:
-* For password protection, passwords are hashed using BLAKE2S to produce
+### Cryptography
+
+For password protection, passwords are hashed using BLAKE2S to produce
 a cryptographic hash. This hash then serves as the secret key for a
 ChaCha20-Poly1305 cipher that the plaintext file is fed into.
-* For secret sharing, a combination of Shamir's Secret Sharing Scheme
+
+For secret sharing, a combination of Shamir's Secret Sharing Scheme
 and the AES-128 cipher is used. A random 16-byte key is generated and is
 then used by AES-128 to encrypt the file. This key is then split using
 Shamir's Secret Sharing Scheme into N shares with at least K shares 
