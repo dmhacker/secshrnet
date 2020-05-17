@@ -41,6 +41,7 @@ for commands from clients and perform one of two actions:
 the share locally.
 2. If a client requests a tag, they try to find and return a share 
 stored locally that matches that tag.
+
 Servers perform little computational work themselves; they primarily
 act as trusted storage units that the client can divy out shares to.
 
