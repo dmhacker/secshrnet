@@ -53,8 +53,8 @@ setup(
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional
         'console_scripts': [
-            'secshrnetc=secshrnet:client:main',
-            'secshrnetd=secshrnet:server:main',
+            'secshrnetc=secshrnet:client.main',
+            'secshrnetd=secshrnet:server.main',
         ],
     },
 )
