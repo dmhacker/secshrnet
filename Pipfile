@@ -10,5 +10,5 @@ redis = "*"
 loguru = "*"
 
 [scripts]
-secshrnetc = "python secshrnet/client.py"
-secshrnetd = "python secshrnet/server.py"
+secshrnetc = "python src/secshrnet/client.py"
+secshrnetd = "python src/secshrnet/server.py"
