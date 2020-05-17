@@ -10,5 +10,5 @@ redis = "*"
 loguru = "*"
 
 [scripts]
-secaislec = "python secaisle/client.py"
-secaisled = "python secaisle/server.py"
+distsecret = "python distsecret/client.py"
+distsecretd = "python distsecret/server.py"

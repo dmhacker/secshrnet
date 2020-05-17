@@ -1,6 +1,6 @@
-# secret-aisle
+# distributed-secret-sharing
 
-The secret-aisle project is an attempt at creating
+The distsecret project is an attempt at creating
 a network of machines through which confidential files could be
 stored securely and redundantly. Every machine on the network
 serves dual roles as storage unit and potential client, 
@@ -22,3 +22,11 @@ data can be recovered using the remaining machines.
 connection to the network.
 * It is easy and cost-efficient to bring a new node into the 
 network.
+
+## Architecture
+
+TODO
+
+## Setup
+
+TODO

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package secaisle;
+package distsecret;
 
 message Share {
     uint32 index = 1;

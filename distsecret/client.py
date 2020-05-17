@@ -8,7 +8,7 @@ import comms_pb2
 import sockutil
 import getpass
 
-SOCKET_FILE = '/tmp/secaisle-socket'
+SOCKET_FILE = '/tmp/distsecret-0-socket'
 
 
 class ClientError(Exception):
@@ -80,7 +80,7 @@ def read_password(tag):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Send commands to a local secaisle hosting server.')
+        description='Send commands to a local distsecret hosting server.')
     parser.add_argument('-s', '--split', action='store_true',
                         help='split a file, upload it to the network')
     parser.add_argument('-c', '--combine', action='store_true',
