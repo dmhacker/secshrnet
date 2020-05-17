@@ -47,7 +47,7 @@ class Server:
         self.received_packets = queue.Queue()
         self.return_packets = queue.Queue()
         dt_string = datetime.now().strftime("%m-%d-%Y_%H:%M:%S")
-        logger.add("logs/distsecret_{}.log".format(dt_string))
+        logger.add("logs/secshrnet_{}.log".format(dt_string))
         logger.info("Session host ID is {}.".format(self.hid))
 
     def hosts(self):
@@ -56,10 +56,10 @@ class Server:
         :return: List of active host IDs
         :rtype: [str]
         '''
-        channels = self.redis.pubsub_channels('distsecret:host:*')
+        channels = self.redis.pubsub_channels('secshrnet:host:*')
 
         def extract_host(channel):
-            return channel.decode()[len('distsecret:host:'):]
+            return channel.decode()[len('secshrnet:host:'):]
 
         return [extract_host(channel) for channel in channels]
 
@@ -81,7 +81,7 @@ class Server:
             packet.share.key_share = shares[i].key_share
             packet.share.ciphertext = shares[i].ciphertext
             packet.share.ciphertext_hash = shares[i].ciphertext_hash
-            self.redis.publish('distsecret:host:' + hid,
+            self.redis.publish('secshrnet:host:' + hid,
                                packet.SerializeToString())
 
     def _collect_return_packets(self, timeout_duration):
@@ -122,7 +122,7 @@ class Server:
         packet.sender = self.hid
         packet.tag = tag
         for hid in self.hosts():
-            self.redis.publish('distsecret:host:' + hid,
+            self.redis.publish('secshrnet:host:' + hid,
                                packet.SerializeToString())
         packets = self._collect_return_packets(RECOVER_TIMEOUT_SECONDS)
         shares = [p.share for p in packets if
@@ -134,7 +134,7 @@ class Server:
         The packet listener subscribes to the host's private channel on Redis.
         It will poll for packets and forward them to the packet processor.
         '''
-        self.pubsub.subscribe('distsecret:host:' + self.hid)
+        self.pubsub.subscribe('secshrnet:host:' + self.hid)
         logger.info("Packet listener thread is now online.")
         for message in self.pubsub.listen():
             if message['type'] == 'message':
@@ -180,7 +180,7 @@ class Server:
                     response.type = comms_pb2.PacketType.NO_SHARE
                     logger.warning("Unable to send a '{}' share to host {}."
                                    .format(packet.tag, packet.sender))
-                self.redis.publish('distsecret:host:' + packet.sender,
+                self.redis.publish('secshrnet:host:' + packet.sender,
                                    response.SerializeToString())
             elif packet.type == comms_pb2.PacketType.RETURN_SHARE:
                 logger.info("Host {} gave us their share."
@@ -263,7 +263,7 @@ class Server:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Run a distsecret hosting server.')
+        description='Run a secshrnet hosting server.')
     parser.add_argument('-c', '--config', default='default.ini',
                         help='path to the server config file')
     args = parser.parse_args()

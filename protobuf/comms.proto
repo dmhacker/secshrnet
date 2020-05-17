@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package distsecret;
+package secshrnet;
 
 message Share {
     uint32 index = 1;

@@ -1,6 +1,6 @@
-# distributed-secret-sharing
+# secret-sharing-network
 
-The distsecret project is an attempt at creating
+The secshrnet project is an attempt at creating
 a network of machines through which confidential files could be
 stored securely and redundantly. Every machine on the network
 serves dual roles as storage unit and potential client, 

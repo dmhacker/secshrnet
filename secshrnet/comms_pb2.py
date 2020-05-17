@@ -16,15 +16,15 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='comms.proto',
-  package='distsecret',
+  package='secshrnet',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x0b\x63omms.proto\x12\ndistsecret\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"m\n\x06Packet\x12$\n\x04type\x18\x01 \x01(\x0e\x32\x16.distsecret.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12 \n\x05share\x18\x05 \x01(\x0b\x32\x11.distsecret.Share\"c\n\x07\x43ommand\x12%\n\x04type\x18\x01 \x01(\x0e\x32\x17.distsecret.CommandType\x12\x0b\n\x03tag\x18\x02 \x01(\t\x12\x11\n\tplaintext\x18\x03 \x01(\x0c\x12\x11\n\tthreshold\x18\x04 \x01(\r\"P\n\x08Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\x11\n\tnum_hosts\x18\x03 \x01(\r\x12\x11\n\tplaintext\x18\x04 \x01(\x0c*P\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03*4\n\x0b\x43ommandType\x12\r\n\tNUM_HOSTS\x10\x00\x12\t\n\x05SPLIT\x10\x01\x12\x0b\n\x07\x43OMBINE\x10\x02\x62\x06proto3'
+  serialized_pb=b'\n\x0b\x63omms.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"k\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\"b\n\x07\x43ommand\x12$\n\x04type\x18\x01 \x01(\x0e\x32\x16.secshrnet.CommandType\x12\x0b\n\x03tag\x18\x02 \x01(\t\x12\x11\n\tplaintext\x18\x03 \x01(\x0c\x12\x11\n\tthreshold\x18\x04 \x01(\r\"P\n\x08Response\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\r\n\x05\x65rror\x18\x02 \x01(\t\x12\x11\n\tnum_hosts\x18\x03 \x01(\r\x12\x11\n\tplaintext\x18\x04 \x01(\x0c*P\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03*4\n\x0b\x43ommandType\x12\r\n\tNUM_HOSTS\x10\x00\x12\t\n\x05SPLIT\x10\x01\x12\x0b\n\x07\x43OMBINE\x10\x02\x62\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
   name='PacketType',
-  full_name='distsecret.PacketType',
+  full_name='secshrnet.PacketType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -47,15 +47,15 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=409,
-  serialized_end=489,
+  serialized_start=405,
+  serialized_end=485,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
 PacketType = enum_type_wrapper.EnumTypeWrapper(_PACKETTYPE)
 _COMMANDTYPE = _descriptor.EnumDescriptor(
   name='CommandType',
-  full_name='distsecret.CommandType',
+  full_name='secshrnet.CommandType',
   filename=None,
   file=DESCRIPTOR,
   values=[
@@ -74,8 +74,8 @@ _COMMANDTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=491,
-  serialized_end=543,
+  serialized_start=487,
+  serialized_end=539,
 )
 _sym_db.RegisterEnumDescriptor(_COMMANDTYPE)
 
@@ -92,34 +92,34 @@ COMBINE = 2
 
 _SHARE = _descriptor.Descriptor(
   name='Share',
-  full_name='distsecret.Share',
+  full_name='secshrnet.Share',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='index', full_name='distsecret.Share.index', index=0,
+      name='index', full_name='secshrnet.Share.index', index=0,
       number=1, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='key_share', full_name='distsecret.Share.key_share', index=1,
+      name='key_share', full_name='secshrnet.Share.key_share', index=1,
       number=2, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='ciphertext', full_name='distsecret.Share.ciphertext', index=2,
+      name='ciphertext', full_name='secshrnet.Share.ciphertext', index=2,
       number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='ciphertext_hash', full_name='distsecret.Share.ciphertext_hash', index=3,
+      name='ciphertext_hash', full_name='secshrnet.Share.ciphertext_hash', index=3,
       number=4, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
@@ -137,41 +137,41 @@ _SHARE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=27,
-  serialized_end=113,
+  serialized_start=26,
+  serialized_end=112,
 )
 
 
 _PACKET = _descriptor.Descriptor(
   name='Packet',
-  full_name='distsecret.Packet',
+  full_name='secshrnet.Packet',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='type', full_name='distsecret.Packet.type', index=0,
+      name='type', full_name='secshrnet.Packet.type', index=0,
       number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='sender', full_name='distsecret.Packet.sender', index=1,
+      name='sender', full_name='secshrnet.Packet.sender', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='tag', full_name='distsecret.Packet.tag', index=2,
+      name='tag', full_name='secshrnet.Packet.tag', index=2,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='share', full_name='distsecret.Packet.share', index=3,
+      name='share', full_name='secshrnet.Packet.share', index=3,
       number=5, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -189,41 +189,41 @@ _PACKET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=115,
-  serialized_end=224,
+  serialized_start=114,
+  serialized_end=221,
 )
 
 
 _COMMAND = _descriptor.Descriptor(
   name='Command',
-  full_name='distsecret.Command',
+  full_name='secshrnet.Command',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='type', full_name='distsecret.Command.type', index=0,
+      name='type', full_name='secshrnet.Command.type', index=0,
       number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='tag', full_name='distsecret.Command.tag', index=1,
+      name='tag', full_name='secshrnet.Command.tag', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='plaintext', full_name='distsecret.Command.plaintext', index=2,
+      name='plaintext', full_name='secshrnet.Command.plaintext', index=2,
       number=3, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='threshold', full_name='distsecret.Command.threshold', index=3,
+      name='threshold', full_name='secshrnet.Command.threshold', index=3,
       number=4, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -241,41 +241,41 @@ _COMMAND = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=226,
-  serialized_end=325,
+  serialized_start=223,
+  serialized_end=321,
 )
 
 
 _RESPONSE = _descriptor.Descriptor(
   name='Response',
-  full_name='distsecret.Response',
+  full_name='secshrnet.Response',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='success', full_name='distsecret.Response.success', index=0,
+      name='success', full_name='secshrnet.Response.success', index=0,
       number=1, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='error', full_name='distsecret.Response.error', index=1,
+      name='error', full_name='secshrnet.Response.error', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='num_hosts', full_name='distsecret.Response.num_hosts', index=2,
+      name='num_hosts', full_name='secshrnet.Response.num_hosts', index=2,
       number=3, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='plaintext', full_name='distsecret.Response.plaintext', index=3,
+      name='plaintext', full_name='secshrnet.Response.plaintext', index=3,
       number=4, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=b"",
       message_type=None, enum_type=None, containing_type=None,
@@ -293,8 +293,8 @@ _RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=327,
-  serialized_end=407,
+  serialized_start=323,
+  serialized_end=403,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKETTYPE
@@ -311,28 +311,28 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 Share = _reflection.GeneratedProtocolMessageType('Share', (_message.Message,), {
   'DESCRIPTOR' : _SHARE,
   '__module__' : 'comms_pb2'
-  # @@protoc_insertion_point(class_scope:distsecret.Share)
+  # @@protoc_insertion_point(class_scope:secshrnet.Share)
   })
 _sym_db.RegisterMessage(Share)
 
 Packet = _reflection.GeneratedProtocolMessageType('Packet', (_message.Message,), {
   'DESCRIPTOR' : _PACKET,
   '__module__' : 'comms_pb2'
-  # @@protoc_insertion_point(class_scope:distsecret.Packet)
+  # @@protoc_insertion_point(class_scope:secshrnet.Packet)
   })
 _sym_db.RegisterMessage(Packet)
 
 Command = _reflection.GeneratedProtocolMessageType('Command', (_message.Message,), {
   'DESCRIPTOR' : _COMMAND,
   '__module__' : 'comms_pb2'
-  # @@protoc_insertion_point(class_scope:distsecret.Command)
+  # @@protoc_insertion_point(class_scope:secshrnet.Command)
   })
 _sym_db.RegisterMessage(Command)
 
 Response = _reflection.GeneratedProtocolMessageType('Response', (_message.Message,), {
   'DESCRIPTOR' : _RESPONSE,
   '__module__' : 'comms_pb2'
-  # @@protoc_insertion_point(class_scope:distsecret.Response)
+  # @@protoc_insertion_point(class_scope:secshrnet.Response)
   })
 _sym_db.RegisterMessage(Response)
 
