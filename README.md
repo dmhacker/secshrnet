@@ -29,7 +29,7 @@ TODO
 ## Architecture
 
 The architecture of the network is fairly simplistic. Within this
-network, at any point in time, we have some amount of participating 
+network, at any point in time, there are some amount of participating 
 host machines, each of which can be grouped into one of two categories:
 servers and clients.
 
@@ -67,7 +67,7 @@ Host discovery is done via channel pattern matching.
   <img width="300" height="300" src="https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/architecture.png">
 </p>
 
-Lastly, we are using the following cryptographic primitives:
+Lastly, the following cryptographic primitives are used:
 * For password protection, passwords are hashed using BLAKE2S to produce
 a cryptographic hash. This hash then serves as the secret key for a
 ChaCha20-Poly1305 cipher that the plaintext file is fed into.
