@@ -126,7 +126,7 @@ class Client(host.Host):
         hex_tags = set(itertools.chain(*tag_groups))
         return {decode_tag(tag) for tag in hex_tags}
 
-    def run():
+    def run(self):
         super().run(block=False)
 
 

@@ -61,7 +61,7 @@ class Server(host.Host):
             logger.warning("Unknown packet type {} from host {}.".format(
                 packet.type, packet.sender))
 
-    def run():
+    def run(self):
         super().run(block=True)
 
 
