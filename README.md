@@ -37,7 +37,7 @@ secshrnetd --config <CONFIG>
 ```
 
 The configuration file specifies which Redis instance to connect
-to. Please see [example.ini](https://raw.githubusercontent.com/dmhacker/secret-sharing-network/master/example.ini) for a example configuration.
+to. Please see [example.ini](https://github.com/dmhacker/secret-sharing-network/blob/master/example.ini) for a example configuration.
 If a configuration file isn't explicitly provided, `secshrnetd`
 will use **default.ini**.
 
