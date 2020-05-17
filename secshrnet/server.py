@@ -1,5 +1,4 @@
 from loguru import logger
-from datetime import datetime
 
 import redis
 import pathlib
@@ -27,10 +26,10 @@ def sanitize_tag(raw_tag):
 class Server:
 
     def __init__(self, config):
-        self.share_dir = os.path.join(
-            os.path.expandvars(config['Host']['Root']), 'shares')
+        root_dir = os.path.expandvars(config['Server']['Root'])
+        socket_file = os.path.expandvars(config['Server']['Socket'])
+        self.share_dir = os.path.join(root_dir, 'shares')
         pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
-        socket_file = os.path.expandvars(config['Host']['Socket'])
         try:
             os.unlink(socket_file)
         except OSError:
@@ -46,8 +45,7 @@ class Server:
         self.hid = str(uuid.uuid4())
         self.received_packets = queue.Queue()
         self.return_packets = queue.Queue()
-        dt_string = datetime.now().strftime("%m-%d-%Y_%H:%M:%S")
-        logger.add("logs/secshrnet_{}.log".format(dt_string))
+        logger.add(os.path.join(root_dir, "secshrnet.log"))
         logger.info("Session host ID is {}.".format(self.hid))
 
     def hosts(self):
