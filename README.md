@@ -53,7 +53,7 @@ secshrnetc -c <CONFIG>
 ```
 
 This will open up a prompt through which commands can be relayed.
-Currently available commands are `split`, `combine`, and `tags`.
+Use `help` to see available commands.
 
 ## Architecture
 

@@ -28,7 +28,7 @@ class Client(host.Host):
 
     def __init__(self, config):
         super().__init__('secshrnet:client:', config)
-        self.command_interface = command.CommandInterface(self)
+        self.cli = command.CommandInterface(self)
         self.collected_packets = None
         logger.remove(handler_id=None)
 
@@ -106,7 +106,7 @@ class Client(host.Host):
 
     def run(self):
         super().run()
-        self.command_interface.run()
+        self.cli.run()
 
 
 def main():

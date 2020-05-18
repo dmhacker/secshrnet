@@ -31,21 +31,14 @@ def read_password():
     return crypto.hash256(getpass.getpass(prompt).encode('utf-8'))
 
 
-class CommandInterface:
+class SplitCommand:
 
     def __init__(self, client):
         self.client = client
-        self.commands = {
-            'split': self.split_command,
-            'combine': self.combine_command,
-            'tags': self.tags_command
-        }
-        readline.parse_and_bind('tab: complete')
-        readline.parse_and_bind('set editing-mode vi')
 
-    def split_command(self, command, args):
-        if len(args) < 3:
-            print("Usage: split <TAG> <FILE>")
+    def handle(self, args):
+        if len(args) < 2:
+            print("Usage:", self.usage())
             return
         tag = args[1]
         filepath = ' '.join(args[2:])
@@ -58,9 +51,21 @@ class CommandInterface:
         print("Contents of {} uploaded to tag '{}'."
             .format(filepath, tag))
 
-    def combine_command(self, command, args):
-        if len(args) < 3:
-            print("Usage: combine <TAG> <FILE>")
+    def usage():
+        return "split <TAG> <FILE>"
+
+    def description():
+        return "Store a file at the specified tag"
+
+
+class CombineCommand:
+
+    def __init__(self, client):
+        self.client = client
+
+    def handle(self, args):
+        if len(args) < 2:
+            print("Usage:", self.usage())
             return
         tag = args[1]
         filepath = ' '.join(args[2:])
@@ -74,7 +79,20 @@ class CommandInterface:
         print("Data for tag '{}' downloaded into {}."
             .format(tag, filepath))
 
-    def tags_command(self, command, args):
+    def usage():
+        return "combine <TAG> <FILE>"
+
+    def description():
+        return "Recreate the file stored at a tag"
+
+
+
+class TagsCommand:
+
+    def __init__(self, client):
+        self.client = client
+
+    def handle(self, args):
         tags = self.client.list_tags()
         if len(tags) == 0:
             print("No tags available on network.")
@@ -82,17 +100,43 @@ class CommandInterface:
             for (tag, count) in tags:
                 print(" - {} ({} servers)".format(tag, count))
 
-    def parse_input(self, full_command, num_servers):
-        if num_servers == 0:
-            print("No active servers on the network.")
-            return
-        args = full_command.split(' ')
-        command = args[0].lower()
-        args = args[1:]
-        if command in self.commands:
-            self.commands[command](command, args)
-        else:
-            print("Unable to interpret command.")
+    def usage():
+        return "tags"
+
+    def description():
+        return "Print all tags stored in the network"
+
+
+class HelpCommand:
+
+    def __init__(self, cli):
+        self.cli = cli
+
+    def handle(self, args):
+        for cmd, obj for self.cli.commands:
+            print("- {}{}{}".format(Fore.MAGENTA, cmd, Style.RESET_ALL))
+            print("\tDescription: {}".format(obj.usage()))
+            print("\tUsage: {}".format(obj.description()))
+
+    def usage():
+        return "help"
+
+    def description():
+        return "Show all available commands"
+
+
+class CommandInterface:
+
+    def __init__(self, client):
+        self.client = client
+        self.commands = {
+            'split': SplitCommand(client),
+            'combine': CombineCommand(client),
+            'tags': TagsCommand(client),
+            'help': HelpCommand(self)
+        }
+        readline.parse_and_bind('tab: complete')
+        readline.parse_and_bind('set editing-mode vi')
 
     def run(self):
         while True:
@@ -102,7 +146,15 @@ class CommandInterface:
                     Style.BRIGHT,
                     Fore.RED if num_servers == 0 else Fore.GREEN,
                     num_servers, Style.RESET_ALL)
-                self.parse_input(input(prompt), num_servers)
+                if num_servers == 0:
+                    continue
+                args = full_command.split(' ')
+                command = args[0].lower()
+                args = args[1:]
+                if command in self.commands:
+                    self.commands[command].handle(command, args)
+                else:
+                    print("Unable to interpret command.")
             except crypto.ShareError as e:
                 print(str(e))
             except FileNotFoundError as e:
