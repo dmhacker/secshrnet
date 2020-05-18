@@ -37,9 +37,10 @@ secshrnetd -c <CONFIG> -r <ROOT_DIRECTORY>
 ```
 
 The configuration file specifies which Redis instance to connect
-to. Please see [example.ini](https://github.com/dmhacker/secret-sharing-network/blob/master/example.ini) for a example configuration.
+to. Please see [redislocal.ini](https://github.com/dmhacker/secret-sharing-network/blob/master/redislocal.ini) for an example configuration.
 If a configuration file isn't explicitly provided, `secshrnetd`
-will use the file at **default.ini**.
+will assume you are attempting to connect to the default
+Redis instance at localhost:6379 with no password.
 
 The root directory specifies where the secshrnet daemon will
 keep its share files along with other metadata. This defaults 
@@ -52,7 +53,7 @@ secshrnetc -c <CONFIG>
 ```
 
 This will open up a prompt through which commands can be relayed.
-Available commands are `split`, `combine`, and `tags`.
+Currently available commands are `split`, `combine`, and `tags`.
 
 ## Architecture
 

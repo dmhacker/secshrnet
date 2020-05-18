@@ -75,11 +75,16 @@ def main():
     parser.add_argument('-r', '--root',
                         default=os.path.expandvars('$HOME/.secshrnet'),
                         help='root directory to write shares to')
-    parser.add_argument('-c', '--config', default='default.ini',
-                        help='path to the server config file')
+    parser.add_argument('-c', '--config', type=str,
+                        help='path to the redis config file')
     args = parser.parse_args()
     config = configparser.ConfigParser()
-    config.read(args.config)
+    if args.config:
+        config.read(args.config)
+    else:
+        config['Redis']['Host'] = '127.0.0.1'
+        config['Redis']['Port'] = '6379'
+        config['Redis']['Password'] = ''
     Server(args.root, config).run()
 
 

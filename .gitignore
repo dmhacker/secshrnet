@@ -139,4 +139,4 @@ cython_debug/
 
 # Configs
 *.ini
-!example.ini
+!redislocal.ini
