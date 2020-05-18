@@ -60,7 +60,8 @@ class Client(host.Host):
     def handle_packet(self, packet):
         if packet.type == comms_pb2.PacketType.RETURN_SHARE or \
                 packet.type == comms_pb2.PacketType.NO_SHARE or \
-                packet.type == comms_pb2.PacketType.RETURN_TAGS:
+                packet.type == comms_pb2.PacketType.RETURN_TAGS or \
+                packet.type == comms_pb2.PacketType.NO_TAGS:
             if self.collected_packets:
                 self.collected_packets.put(packet)
 
@@ -102,7 +103,7 @@ class Client(host.Host):
             packet.share.ciphertext_hash = shares[i].ciphertext_hash
             self.send_packet('secshrnet:server:' + hid, packet)
 
-    def recombine(self, tag):
+    def combine(self, tag):
         packet = comms_pb2.Packet()
         packet.type = comms_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
@@ -155,7 +156,7 @@ class Client(host.Host):
                     return
                 tag = args[1]
                 filepath = ' '.join(args[2:])
-                ct = client.recombine(tag)
+                ct = client.combine(tag)
                 password = read_password(tag)
                 pt = crypto.decrypt_ciphertext(ct, password)
                 if pt is None:

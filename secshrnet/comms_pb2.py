@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='secshrnet',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\x0b\x63omms.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"}\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t*p\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x62\x06proto3'
+  serialized_pb=b'\n\x0b\x63omms.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"}\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t*}\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x62\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -52,11 +52,15 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
       name='RETURN_TAGS', index=5, number=5,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='NO_TAGS', index=6, number=6,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=241,
-  serialized_end=353,
+  serialized_end=366,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
@@ -67,6 +71,7 @@ RETURN_SHARE = 2
 NO_SHARE = 3
 LIST_TAGS = 4
 RETURN_TAGS = 5
+NO_TAGS = 6
 
 
 

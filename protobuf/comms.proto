@@ -16,6 +16,7 @@ enum PacketType {
     NO_SHARE = 3;
     LIST_TAGS = 4;
     RETURN_TAGS = 5;
+    NO_TAGS = 6;
 }
 
 message Packet {

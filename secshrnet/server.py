@@ -52,8 +52,11 @@ class Server(host.Host):
             filenames = [f for f in os.listdir(self.share_dir) if os.path.isfile(f)]
             response = comms_pb2.Packet()
             response.sender = self.hid
-            response.type = comms_pb2.PacketType.RETURN_TAGS
-            response.hex_tags = ','.join(filenames)
+            if len(filenames) > 0:
+                response.type = comms_pb2.PacketType.RETURN_TAGS
+                response.hex_tags = ','.join(filenames)
+            else:
+                response.type = comms_pb2.PacketType.NO_TAGS
             logger.info('Reporting {} tags to host {}.'
                         .format(len(filenames), packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
