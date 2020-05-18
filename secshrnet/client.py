@@ -14,9 +14,6 @@ import base64
 from . import crypto
 from . import comms_pb2
 from . import host
-# import crypto
-# import comms_pb2
-# import host
 
 RECOVER_TIMEOUT_SECONDS = 10
 LIST_TIMEOUT_SECONDS = 10
@@ -30,7 +27,7 @@ def read_threshold(num_hosts):
     while True:
         default_threshold = num_hosts // 2 + 1
         prompt = "{}Minimum shares (default = {}){}: ".format(
-            Fore.Yellow, num_hosts, Style.RESET_ALL)
+            Fore.YELLOW, num_hosts, Style.RESET_ALL)
         threshold_str = input(prompt)
         if threshold_str == "":
             threshold = default_threshold

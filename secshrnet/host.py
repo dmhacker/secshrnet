@@ -8,12 +8,15 @@ import queue
 import threading
 
 from . import comms_pb2
-# import comms_pb2
 
 
 class Host(ABC):
 
     def __init__(self, channel_prefix, config):
+        '''
+        :param str channel_prefix: Prefix to be prepended to our channel name
+        :param configparser.Config config: Redis configuration file
+        '''
         self.redis = redis.Redis(
             host=config['Redis']['Host'],
             port=int(config['Redis']['Port']),
@@ -25,12 +28,30 @@ class Host(ABC):
 
     @abstractmethod
     def handle_packet(self, packet):
+        '''
+        Determines how an incoming packet is processed.
+        Implemented by subclasses.
+        :param comms_pb2.Packet packet: An incoming packet
+        '''
         pass
 
     def send_packet(self, channel, packet):
+        '''
+        Sends a protobuf packet to the given Redis channel.
+        :param str channel: The channel name
+        :param comms_pb2.Packet packet: An outgoing packet
+        '''
         self.redis.publish(channel, packet.SerializeToString())
 
     def connected_hosts(self, channel_prefix):
+        '''
+        Returns a list of hosts that subscribed to channels
+        matching the given prefix. Segmenting by channel prefix
+        allows us to identify servers and clients separately.
+        :param str channel_prefix: The channel prefix to match against
+        :return: A list of host IDs
+        :rtype: [str]
+        '''
         prefix_len = len(channel_prefix)
         channels = self.redis.pubsub_channels('{}*'.format(channel_prefix))
         return [channel.decode()[prefix_len:] for channel in channels]
