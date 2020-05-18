@@ -138,5 +138,5 @@ dmypy.json
 cython_debug/
 
 # Configs
-*.ini
-!redislocal.ini
+*.conf
+!example.conf

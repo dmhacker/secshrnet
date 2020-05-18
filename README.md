@@ -37,7 +37,7 @@ secshrnetd -c <CONFIG> -r <ROOT_DIRECTORY>
 ```
 
 The configuration file specifies which Redis instance to connect
-to. Please see [redislocal.ini](https://github.com/dmhacker/secret-sharing-network/blob/master/redislocal.ini) for an example configuration.
+to. Please see [example.conf](https://github.com/dmhacker/secret-sharing-network/blob/master/example.conf) for an example configuration.
 If a configuration file isn't explicitly provided, `secshrnetd`
 will assume you are attempting to connect to the default
 Redis instance at localhost:6379 with no password.
