@@ -84,9 +84,9 @@ class Host(ABC):
             packet = self.received_packets.get()
             self.handle_packet(packet)
 
-    def run(self, block=True):
+    def run(self):
         '''
-        Run the server and potentially block the calling thread.
+        Run the host threads asynchronously.
         '''
         threads = []
         threads.append(threading.Thread(target=self._packet_listener,
@@ -95,6 +95,3 @@ class Host(ABC):
                                         daemon=True))
         for thr in threads:
             thr.start()
-        if block:
-            for thr in threads:
-                thr.join()

@@ -5,6 +5,7 @@ import os
 import configparser
 import argparse
 import base64
+import signal
 
 from . import network_pb2
 from . import host
@@ -66,7 +67,8 @@ class Server(host.Host):
                 packet.type, packet.sender))
 
     def run(self):
-        super().run(block=True)
+        super().run()
+        signal.pause()
 
 
 def main():

@@ -105,7 +105,7 @@ class Client(host.Host):
         return list(Counter(tags).items())
 
     def run(self):
-        super().run(block=False)
+        super().run()
         self.command_interface.run()
 
 
