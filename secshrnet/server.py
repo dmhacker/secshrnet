@@ -49,11 +49,13 @@ class Server(host.Host):
                             .format(packet.tag, packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
         elif packet.type == comms_pb2.PacketType.LIST_TAGS:
-            (_, _, filenames) = next(os.walk(self.share_dir))
+            filenames = [f for f in os.listdir(self.share_dir) if os.path.isfile(f)]
             response = comms_pb2.Packet()
             response.sender = self.hid
             response.type = comms_pb2.PacketType.RETURN_TAGS
             response.hex_tags = ','.join(filenames)
+            logger.info('Reporting {} tags to host {}.'
+                        .format(len(filenames), packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
         else:
             logger.warning("Unknown packet type {} from host {}.".format(
