@@ -33,7 +33,7 @@ pip install secshrnet
 To run a server, use:
 
 ```
-secshrnetd -c <CONFIG>
+secshrnetd -c <CONFIG> -r <ROOT_DIRECTORY>
 ```
 
 The configuration file specifies which Redis instance to connect
@@ -41,7 +41,11 @@ to. Please see [example.ini](https://github.com/dmhacker/secret-sharing-network/
 If a configuration file isn't explicitly provided, `secshrnetd`
 will use the file at **default.ini**.
 
-Likewise, to run a client, use:
+The root directory specifies where the secshrnet daemon will
+keep its share files along with other metadata. This defaults 
+to **$HOME/.secshrnet**.
+
+To run a client, use:
 
 ```
 secshrnetc -c <CONFIG>
