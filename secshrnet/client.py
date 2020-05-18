@@ -146,7 +146,7 @@ class Client(host.Host):
             with open(filepath, 'rb') as f:
                 pt = f.read()
                 ct = crypto.encrypt_plaintext(pt, password)
-                client.split(tag, ct, threshold)
+                self.split(tag, ct, threshold)
             print("Contents of {} uploaded to tag '{}'."
                 .format(filepath, tag))
         elif command == "combine":
@@ -155,7 +155,7 @@ class Client(host.Host):
                 return
             tag = args[1]
             filepath = ' '.join(args[2:])
-            ct = client.combine(tag)
+            ct = self.combine(tag)
             password = read_password(tag)
             pt = crypto.decrypt_ciphertext(ct, password)
             if pt is None:
