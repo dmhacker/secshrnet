@@ -5,7 +5,6 @@ from collections import Counter
 import configparser
 import argparse
 import sys
-import getpass
 import queue
 import itertools
 import time
@@ -14,6 +13,8 @@ import base64
 from . import crypto
 from . import network_pb2
 from . import host
+from . import command
+
 
 RECOVER_TIMEOUT_SECONDS = 10
 LIST_TIMEOUT_SECONDS = 10
@@ -23,35 +24,11 @@ def decode_tag(hex_tag):
     return base64.b16decode(hex_tag.encode()).decode()
 
 
-def read_threshold(num_hosts):
-    while True:
-        default_threshold = num_hosts // 2 + 1
-        prompt = "{}Minimum shares (default = {}){}: ".format(
-            Fore.YELLOW, num_hosts, Style.RESET_ALL)
-        threshold_str = input(prompt)
-        if threshold_str == "":
-            threshold = default_threshold
-            break
-        try:
-            threshold = int(threshold_str)
-            if threshold >= 1 and threshold <= num_hosts:
-                break
-        except ValueError:
-            pass
-        print("Please enter a number between 1 and {}."
-              .format(num_hosts))
-    return threshold
-
-
-def read_password():
-    prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
-    return crypto.hash256(getpass.getpass(prompt).encode('utf-8'))
-
-
 class Client(host.Host):
 
     def __init__(self, config):
         super().__init__('secshrnet:client:', config)
+        self.command_interface = command.CommandInterface(self)
         self.collected_packets = None
         logger.remove(handler_id=None)
 
@@ -127,71 +104,9 @@ class Client(host.Host):
         tags = [decode_tag(tag) for tag in hex_tags]
         return list(Counter(tags).items())
 
-    def handle_command(self, args, num_servers):
-        if num_servers == 0:
-            print("No active servers on the network.")
-            return
-        command = args[0].lower()
-        if command == "split":
-            if len(args) < 3:
-                print("Usage: split <TAG> <FILE>")
-                return
-            tag = args[1]
-            filepath = ' '.join(args[2:])
-            threshold = read_threshold(num_servers)
-            password = read_password()
-            with open(filepath, 'rb') as f:
-                pt = f.read()
-                ct = crypto.encrypt_plaintext(pt, password)
-                self.split(tag, ct, threshold)
-            print("Contents of {} uploaded to tag '{}'."
-                .format(filepath, tag))
-        elif command == "combine":
-            if len(args) < 3:
-                print("Usage: combine <TAG> <FILE>")
-                return
-            tag = args[1]
-            filepath = ' '.join(args[2:])
-            ct = self.combine(tag)
-            password = read_password()
-            pt = crypto.decrypt_ciphertext(ct, password)
-            if pt is None:
-                raise crypto.ShareError("Incorrect password.")
-            with open(filepath, 'wb') as f:
-                f.write(pt)
-            print("Data for tag '{}' downloaded into {}."
-                .format(tag, filepath))
-        elif command == "tags":
-            tags = self.list_tags()
-            if len(tags) == 0:
-                print("No tags available on network.")
-            else:
-                for (tag, count) in tags:
-                    print(" - {} ({} servers)".format(tag, count))
-        else:
-            print("Unable to interpret command.")
-
-    def _command_listener(self):
-        while True:
-            try:
-                num_servers = len(self.servers())
-                prompt = "{}{}{} servers{}> ".format(
-                    Style.BRIGHT,
-                    Fore.RED if num_servers == 0 else Fore.GREEN,
-                    num_servers, Style.RESET_ALL)
-                full_command = input(prompt)
-                self.handle_command(full_command.split(' '), num_servers)
-            except crypto.ShareError as e:
-                print(str(e))
-            except FileNotFoundError as e:
-                print(str(e))
-            except EOFError:
-                print("\nbye")
-                break
-
     def run(self):
         super().run(block=False)
-        self._command_listener()
+        self.command_interface.run()
 
 
 def main():
@@ -204,6 +119,7 @@ def main():
     if args.config:
         config.read(args.config)
     else:
+        config['Redis'] = {}
         config['Redis']['Host'] = '127.0.0.1'
         config['Redis']['Port'] = '6379'
         config['Redis']['Password'] = ''

@@ -82,6 +82,7 @@ def main():
     if args.config:
         config.read(args.config)
     else:
+        config['Redis'] = {}
         config['Redis']['Host'] = '127.0.0.1'
         config['Redis']['Port'] = '6379'
         config['Redis']['Password'] = ''
