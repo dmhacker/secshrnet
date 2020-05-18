@@ -49,7 +49,8 @@ class Server(host.Host):
                             .format(packet.tag, packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
         elif packet.type == comms_pb2.PacketType.LIST_TAGS:
-            filenames = [f for f in os.listdir(self.share_dir) if os.path.isfile(f)]
+            filenames = [f for f in os.listdir(self.share_dir)
+                         if os.path.isfile(os.path.join(self.share_dir, f))]
             response = comms_pb2.Packet()
             response.sender = self.hid
             if len(filenames) > 0:
