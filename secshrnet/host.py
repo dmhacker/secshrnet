@@ -8,6 +8,7 @@ import queue
 import threading
 
 from . import comms_pb2
+# import comms_pb2
 
 
 class Host(ABC):

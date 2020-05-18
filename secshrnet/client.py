@@ -1,4 +1,5 @@
 from loguru import logger
+from collections import Counter
 
 import configparser
 import argparse
@@ -12,6 +13,9 @@ import base64
 from . import crypto
 from . import comms_pb2
 from . import host
+# import crypto
+# import comms_pb2
+# import host
 
 RECOVER_TIMEOUT_SECONDS = 10
 LIST_TIMEOUT_SECONDS = 10
@@ -96,8 +100,7 @@ class Client(host.Host):
             packet.share.key_share = shares[i].key_share
             packet.share.ciphertext = shares[i].ciphertext
             packet.share.ciphertext_hash = shares[i].ciphertext_hash
-            self.send_packet('secshrnet:server:' + hid,
-                             packet.SerializeToString())
+            self.send_packet('secshrnet:server:' + hid, packet)
 
     def recombine(self, tag):
         packet = comms_pb2.Packet()
@@ -105,8 +108,7 @@ class Client(host.Host):
         packet.sender = self.hid
         packet.tag = tag
         for hid in self.servers():
-            self.send_packet('secshrnet:server:' + hid,
-                             packet.SerializeToString())
+            self.send_packet('secshrnet:server:' + hid, packet)
         packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
         shares = [p.share for p in packets if
                   p.type == comms_pb2.PacketType.RETURN_SHARE]
@@ -116,68 +118,90 @@ class Client(host.Host):
         packet = comms_pb2.Packet()
         packet.type = comms_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
-        for hid in self.servers():
-            self.send_packet('secshrnet:server:' + hid,
-                             packet.SerializeToString())
+        servset = self.servers()
+        for hid in servset:
+            self.send_packet('secshrnet:server:' + hid, packet)
         packets = self._collect_packets(LIST_TIMEOUT_SECONDS)
         hex_tags = [p.tag for p in packets if
                     p.type == comms_pb2.PacketType.RETURN_TAGS]
         tag_groups = [tag.split(',') for tag in hex_tags]
-        hex_tags = set(itertools.chain(*tag_groups))
-        return {decode_tag(tag) for tag in hex_tags}
+        hex_tags = list(itertools.chain(*tag_groups))
+        tags = [decode_tag(tag) for tag in hex_tags]
+        return list(Counter(tags).items())
+
+    def handle_command(self, args, num_servers):
+        if num_servers == 0:
+            print("No active servers on the network.")
+            return
+        try:
+            command = args[0].lower()
+            if command == "split":
+                if len(args) < 3:
+                    print("Usage: split <TAG> <FILE>")
+                    return
+                tag = args[1]
+                filepath = ' '.join(args[2:])
+                threshold = read_threshold(num_servers)
+                password = read_password(tag)
+                with open(filepath, 'rb') as f:
+                    pt = f.read()
+                    ct = crypto.encrypt_plaintext(pt, password)
+                    client.split(tag, ct, threshold)
+                print("Contents of {} uploaded to tag '{}'."
+                    .format(filepath, tag))
+            elif command == "combine":
+                if len(args) < 3:
+                    print("Usage: combine <TAG> <FILE>")
+                    return
+                tag = args[1]
+                filepath = ' '.join(args[2:])
+                ct = client.recombine(tag)
+                password = read_password(tag)
+                pt = crypto.decrypt_ciphertext(ct, password)
+                if pt is None:
+                    raise crypto.ShareError("Incorrect password.")
+                with open(filepath, 'wb') as f:
+                    f.write(pt)
+                print("Data for tag '{}' downloaded into {}."
+                    .format(tag, filepath))
+            elif command == "tags":
+                tags = self.list_tags()
+                if len(tags) == 0:
+                    print("No tags available on network.")
+                else:
+                    print("Available tags:")
+                    for (tag, count) in tags:
+                        print("\t- {} ({} servers)".format(tag, count))
+            else:
+                print("Unable to interpret command.")
+        except crypto.ShareError as e:
+            print(str(e))
+
+    def _command_listener(self):
+        while True:
+            try:
+                num_servers = len(self.servers())
+                full_command = input("{} servers> ".format(num_servers))
+                self.handle_command(full_command.split(' '), num_servers)
+            except EOFError:
+                print()
+                break
 
     def run(self):
         super().run(block=False)
+        self._command_listener()
 
 
 def main():
     parser = argparse.ArgumentParser(
         description='Run a secshrnet client.')
-    parser.add_argument('-s', '--split', action='store_true',
-                        help='split a file, upload it to the network')
-    parser.add_argument('-c', '--combine', action='store_true',
-                        help='combine data in the network, store to file')
-    parser.add_argument('--config', default='default.ini',
+    parser.add_argument('-c', '--config', default='default.ini',
                         help='path to the configuration file')
-    parser.add_argument('tag', help='unique tag location')
-    parser.add_argument('file', help='file to upload from or download to')
     args = parser.parse_args()
-    if args.split == args.combine:
-        print("Please specify either --split or --combine.", file=sys.stderr)
-        sys.exit(1)
-        return
     config = configparser.ConfigParser()
     config.read(args.config)
     client = Client(config)
-    client.run(block=False)
-    num_servers = len(client.servers())
-    if num_servers == 0:
-        print("No servers online.")
-        return
-    print("Found {} servers on the network.".format(num_servers))
-    try:
-        if args.split:
-            threshold = read_threshold(num_servers)
-            password = read_password(args.tag)
-            with open(args.file, 'rb') as f:
-                pt = f.read()
-                ct = crypto.encrypt_plaintext(pt, password)
-                client.split(args.tag, ct, threshold)
-            print("Contents of {} uploaded to tag '{}'."
-                  .format(args.file, args.tag))
-        else:
-            ct = client.recombine(args.tag)
-            password = read_password(args.tag)
-            pt = crypto.decrypt_ciphertext(ct, password)
-            if pt is None:
-                raise crypto.ShareError("Incorrect password.")
-            with open(args.file, 'wb') as f:
-                f.write(pt)
-            print("Data for tag '{}' downloaded into {}."
-                  .format(args.tag, args.file))
-    except crypto.ShareError as e:
-        print(str(e), file=sys.stderr)
-        sys.exit(1)
+    client.run()
 
 
 if __name__ == '__main__':

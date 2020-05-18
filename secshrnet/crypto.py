@@ -5,6 +5,7 @@ from Crypto.Hash import BLAKE2s
 from collections import Counter
 
 from . import comms_pb2
+# import comms_pb2
 
 
 class ShareError(Exception):
