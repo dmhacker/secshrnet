@@ -178,7 +178,8 @@ class Client(host.Host):
         while True:
             try:
                 num_servers = len(self.servers())
-                prompt = "{}{} servers{}> ".format(
+                prompt = "{}{}{} servers{}> ".format(
+                    Style.BRIGHT,
                     Fore.RED if num_servers == 0 else Fore.GREEN,
                     num_servers, Style.RESET_ALL)
                 full_command = input(prompt)
