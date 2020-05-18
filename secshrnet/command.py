@@ -40,9 +40,9 @@ class SplitCommand:
         if len(args) < 2:
             print("Usage:", self.usage())
             return
-        tag = args[1]
-        filepath = ' '.join(args[2:])
-        threshold = read_threshold(num_servers)
+        tag = args[0]
+        filepath = ' '.join(args[1:])
+        threshold = read_threshold(len(self.client.servers()))
         password = read_password()
         with open(filepath, 'rb') as f:
             pt = f.read()
@@ -51,10 +51,10 @@ class SplitCommand:
         print("Contents of {} uploaded to tag '{}'."
             .format(filepath, tag))
 
-    def usage():
+    def usage(self):
         return "split <TAG> <FILE>"
 
-    def description():
+    def description(self):
         return "Store a file at the specified tag"
 
 
@@ -67,8 +67,8 @@ class CombineCommand:
         if len(args) < 2:
             print("Usage:", self.usage())
             return
-        tag = args[1]
-        filepath = ' '.join(args[2:])
+        tag = args[0]
+        filepath = ' '.join(args[1:])
         ct = self.client.combine(tag)
         password = read_password()
         pt = crypto.decrypt_ciphertext(ct, password)
@@ -79,10 +79,10 @@ class CombineCommand:
         print("Data for tag '{}' downloaded into {}."
             .format(tag, filepath))
 
-    def usage():
+    def usage(self):
         return "combine <TAG> <FILE>"
 
-    def description():
+    def description(self):
         return "Recreate the file stored at a tag"
 
 
@@ -98,12 +98,12 @@ class TagsCommand:
             print("No tags available on network.")
         else:
             for (tag, count) in tags:
-                print(" - {} ({} servers)".format(tag, count))
+                print(" - {}{}{} ({} servers)".format(Fore.MAGENTA, tag, Style.RESET_ALL, count))
 
-    def usage():
+    def usage(self):
         return "tags"
 
-    def description():
+    def description(self):
         return "Print all tags stored in the network"
 
 
@@ -113,15 +113,13 @@ class HelpCommand:
         self.cli = cli
 
     def handle(self, args):
-        for cmd, obj for self.cli.commands:
-            print("- {}{}{}".format(Fore.MAGENTA, cmd, Style.RESET_ALL))
-            print("\tDescription: {}".format(obj.usage()))
-            print("\tUsage: {}".format(obj.description()))
+        for (cmd, obj) in self.cli.commands.items():
+            print(" - {}{}{}: {}".format(Fore.MAGENTA, obj.usage(), Style.RESET_ALL, obj.description()))
 
-    def usage():
+    def usage(self):
         return "help"
 
-    def description():
+    def description(self):
         return "Show all available commands"
 
 
@@ -146,13 +144,15 @@ class CommandInterface:
                     Style.BRIGHT,
                     Fore.RED if num_servers == 0 else Fore.GREEN,
                     num_servers, Style.RESET_ALL)
+                full_command = input(prompt)
                 if num_servers == 0:
+                    print("No servers available on network.")
                     continue
                 args = full_command.split(' ')
                 command = args[0].lower()
                 args = args[1:]
                 if command in self.commands:
-                    self.commands[command].handle(command, args)
+                    self.commands[command].handle(args)
                 else:
                     print("Unable to interpret command.")
             except crypto.ShareError as e:
