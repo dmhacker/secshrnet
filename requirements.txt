@@ -2,3 +2,4 @@ pycryptodome
 protobuf
 redis
 loguru
+colorama

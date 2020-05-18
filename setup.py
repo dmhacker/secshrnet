@@ -8,9 +8,14 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get all dependencies from requirements.txt
+with open(path.join(here, 'requirements.txt')) as f:
+    required_packages = f.read().strip().split('\n')
+    print(required_packages)
+
 setup(
     name='secshrnet',  # Required
-    version='0.2.9',  # Required
+    version='0.3',  # Required
     description='Secret sharing over a distributed network',  # Optional
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)
@@ -41,7 +46,7 @@ setup(
     package_dir={'': '.'},  # Optional
     packages=find_packages(where='.'),  # Required
     python_requires='>=3.5, <4',
-    install_requires=['pycryptodome', 'protobuf', 'redis', 'loguru'],  # Optional
+    install_requires=required_packages,  # Optional
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
     entry_points={  # Optional

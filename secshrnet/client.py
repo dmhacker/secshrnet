@@ -1,4 +1,5 @@
 from loguru import logger
+from colorama import Fore, Style
 from collections import Counter
 
 import configparser
@@ -168,9 +169,8 @@ class Client(host.Host):
             if len(tags) == 0:
                 print("No tags available on network.")
             else:
-                print("Available tags:")
                 for (tag, count) in tags:
-                    print("\t- {} ({} servers)".format(tag, count))
+                    print(" - {} ({} servers)".format(tag, count))
         else:
             print("Unable to interpret command.")
 
@@ -178,7 +178,10 @@ class Client(host.Host):
         while True:
             try:
                 num_servers = len(self.servers())
-                full_command = input("{} servers> ".format(num_servers))
+                prompt = "{}{} servers{}> ".format(
+                    Fore.RED if num_servers == 0 else Fore.GREEN,
+                    num_servers, Style.RESET_ALL)
+                full_command = input(prompt)
                 self.handle_command(full_command.split(' '), num_servers)
             except crypto.ShareError as e:
                 print(str(e))
