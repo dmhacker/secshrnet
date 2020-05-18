@@ -6,7 +6,7 @@ import configparser
 import argparse
 import base64
 
-from . import comms_pb2
+from . import network_pb2
 from . import host
 
 
@@ -24,7 +24,7 @@ class Server(host.Host):
         logger.info("Session host ID is {}.".format(self.hid))
 
     def handle_packet(self, packet):
-        if packet.type == comms_pb2.PacketType.STORE_SHARE:
+        if packet.type == network_pb2.PacketType.STORE_SHARE:
             logger.info("Saving share for tag '{}' from host {}."
                         .format(packet.tag, packet.sender))
             tagpath = os.path.join(self.share_dir, encode_tag(packet.tag))
@@ -32,32 +32,32 @@ class Server(host.Host):
                 logger.warning('{} is being overwritten.'.format(tagpath))
             with open(tagpath, 'wb') as f:
                 f.write(packet.share.SerializeToString())
-        elif packet.type == comms_pb2.PacketType.RECOVER_SHARE:
+        elif packet.type == network_pb2.PacketType.RECOVER_SHARE:
             tagpath = os.path.join(self.share_dir,
                                    encode_tag(packet.tag))
-            response = comms_pb2.Packet()
+            response = network_pb2.Packet()
             response.sender = self.hid
             if os.path.exists(tagpath):
-                response.type = comms_pb2.PacketType.RETURN_SHARE
+                response.type = network_pb2.PacketType.RETURN_SHARE
                 with open(tagpath, 'rb') as f:
                     response.share.ParseFromString(f.read())
                 logger.info("Sending a '{}' share to host {}."
                             .format(packet.tag, packet.sender))
             else:
-                response.type = comms_pb2.PacketType.NO_SHARE
+                response.type = network_pb2.PacketType.NO_SHARE
                 logger.info("No '{}' share to send to host {}."
                             .format(packet.tag, packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
-        elif packet.type == comms_pb2.PacketType.LIST_TAGS:
+        elif packet.type == network_pb2.PacketType.LIST_TAGS:
             filenames = [f for f in os.listdir(self.share_dir)
                          if os.path.isfile(os.path.join(self.share_dir, f))]
-            response = comms_pb2.Packet()
+            response = network_pb2.Packet()
             response.sender = self.hid
             if len(filenames) > 0:
-                response.type = comms_pb2.PacketType.RETURN_TAGS
+                response.type = network_pb2.PacketType.RETURN_TAGS
                 response.hex_tags = ','.join(filenames)
             else:
-                response.type = comms_pb2.PacketType.NO_TAGS
+                response.type = network_pb2.PacketType.NO_TAGS
             logger.info('Reporting {} tags to host {}.'
                         .format(len(filenames), packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)

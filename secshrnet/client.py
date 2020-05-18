@@ -12,7 +12,7 @@ import time
 import base64
 
 from . import crypto
-from . import comms_pb2
+from . import network_pb2
 from . import host
 
 RECOVER_TIMEOUT_SECONDS = 10
@@ -56,10 +56,10 @@ class Client(host.Host):
         logger.remove(handler_id=None)
 
     def handle_packet(self, packet):
-        if packet.type == comms_pb2.PacketType.RETURN_SHARE or \
-                packet.type == comms_pb2.PacketType.NO_SHARE or \
-                packet.type == comms_pb2.PacketType.RETURN_TAGS or \
-                packet.type == comms_pb2.PacketType.NO_TAGS:
+        if packet.type == network_pb2.PacketType.RETURN_SHARE or \
+                packet.type == network_pb2.PacketType.NO_SHARE or \
+                packet.type == network_pb2.PacketType.RETURN_TAGS or \
+                packet.type == network_pb2.PacketType.NO_TAGS:
             if self.collected_packets:
                 self.collected_packets.put(packet)
 
@@ -91,8 +91,8 @@ class Client(host.Host):
         servset = self.servers()
         shares = crypto.split_shares(plaintext, threshold, len(servset))
         for i, hid in enumerate(servset):
-            packet = comms_pb2.Packet()
-            packet.type = comms_pb2.PacketType.STORE_SHARE
+            packet = network_pb2.Packet()
+            packet.type = network_pb2.PacketType.STORE_SHARE
             packet.sender = self.hid
             packet.tag = tag
             packet.share.index = shares[i].index
@@ -102,26 +102,26 @@ class Client(host.Host):
             self.send_packet('secshrnet:server:' + hid, packet)
 
     def combine(self, tag):
-        packet = comms_pb2.Packet()
-        packet.type = comms_pb2.PacketType.RECOVER_SHARE
+        packet = network_pb2.Packet()
+        packet.type = network_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
         packet.tag = tag
         for hid in self.servers():
             self.send_packet('secshrnet:server:' + hid, packet)
         packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
         shares = [p.share for p in packets if
-                  p.type == comms_pb2.PacketType.RETURN_SHARE]
+                  p.type == network_pb2.PacketType.RETURN_SHARE]
         return crypto.combine_shares(shares)
 
     def list_tags(self):
-        packet = comms_pb2.Packet()
-        packet.type = comms_pb2.PacketType.LIST_TAGS
+        packet = network_pb2.Packet()
+        packet.type = network_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
         for hid in self.servers():
             self.send_packet('secshrnet:server:' + hid, packet)
         packets = self._collect_packets(LIST_TIMEOUT_SECONDS)
         hex_tags = [p.hex_tags for p in packets if
-                    p.type == comms_pb2.PacketType.RETURN_TAGS]
+                    p.type == network_pb2.PacketType.RETURN_TAGS]
         tag_groups = [tag.split(',') for tag in hex_tags]
         hex_tags = list(itertools.chain(*tag_groups))
         tags = [decode_tag(tag) for tag in hex_tags]

@@ -4,7 +4,7 @@ from Crypto.Protocol.SecretSharing import Shamir
 from Crypto.Hash import BLAKE2s
 from collections import Counter
 
-from . import comms_pb2
+from . import network_pb2
 
 
 class ShareError(Exception):
@@ -60,7 +60,7 @@ def split_shares(message, threshold, share_count):
     :param int threshold: Minimum number of shares needed for reconstruction
     :param int share_count: Number of shares to produce
     :return: List of protobuf shares
-    :rtype: [comms_pb2.Share]
+    :rtype: [network_pb2.Share]
     '''
     if threshold > share_count:
         raise ShareError("Threshold must not be greater than the share count.")
@@ -74,7 +74,7 @@ def split_shares(message, threshold, share_count):
     raw_shares = Shamir.split(threshold, share_count, key)
 
     def _to_protobuf(raw_share):
-        share = comms_pb2.Share()
+        share = network_pb2.Share()
         share.index = raw_share[0]
         share.key_share = raw_share[1]
         share.ciphertext = full_ct
@@ -86,7 +86,7 @@ def split_shares(message, threshold, share_count):
 
 def combine_shares(shares):
     '''
-    :param [comms_pb2.Share] message: List of protobuf shares
+    :param [network_pb2.Share] message: List of protobuf shares
     :return: Reconstructed message if possible
     :rtype: bytes
     '''

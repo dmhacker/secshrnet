@@ -7,7 +7,7 @@ import uuid
 import queue
 import threading
 
-from . import comms_pb2
+from . import network_pb2
 
 
 class Host(ABC):
@@ -31,7 +31,7 @@ class Host(ABC):
         '''
         Determines how an incoming packet is processed.
         Implemented by subclasses.
-        :param comms_pb2.Packet packet: An incoming packet
+        :param network_pb2.Packet packet: An incoming packet
         '''
         pass
 
@@ -39,7 +39,7 @@ class Host(ABC):
         '''
         Sends a protobuf packet to the given Redis channel.
         :param str channel: The channel name
-        :param comms_pb2.Packet packet: An outgoing packet
+        :param network_pb2.Packet packet: An outgoing packet
         '''
         self.redis.publish(channel, packet.SerializeToString())
 
@@ -65,7 +65,7 @@ class Host(ABC):
         logger.info("Packet listener thread is now online.")
         for message in self.pubsub.listen():
             if message['type'] == 'message':
-                packet = comms_pb2.Packet()
+                packet = network_pb2.Packet()
                 try:
                     packet.ParseFromString(message['data'])
                     self.received_packets.put(packet)
