@@ -29,9 +29,9 @@ def decode_tag(hex_tag):
 def read_threshold(num_hosts):
     while True:
         default_threshold = num_hosts // 2 + 1
-        threshold_str = input(("Minimum shares needed for "
-                               "reconstruction (default = {}): ")
-                              .format(default_threshold))
+        prompt = "{}Minimum shares (default = {}){}: ".format(
+            Fore.Yellow, num_hosts, Style.RESET_ALL)
+        threshold_str = input(prompt)
         if threshold_str == "":
             threshold = default_threshold
             break
@@ -42,13 +42,13 @@ def read_threshold(num_hosts):
         except ValueError:
             pass
         print("Please enter a number between 1 and {}."
-              .format(num_hosts), file=sys.stderr)
+              .format(num_hosts))
     return threshold
 
 
-def read_password(tag):
-    return crypto.hash256(getpass.getpass("Password for tag '{}': "
-                                          .format(tag)).encode('utf-8'))
+def read_password():
+    prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
+    return crypto.hash256(getpass.getpass(prompt).encode('utf-8'))
 
 
 class Client(host.Host):
@@ -142,7 +142,7 @@ class Client(host.Host):
             tag = args[1]
             filepath = ' '.join(args[2:])
             threshold = read_threshold(num_servers)
-            password = read_password(tag)
+            password = read_password()
             with open(filepath, 'rb') as f:
                 pt = f.read()
                 ct = crypto.encrypt_plaintext(pt, password)
@@ -156,7 +156,7 @@ class Client(host.Host):
             tag = args[1]
             filepath = ' '.join(args[2:])
             ct = self.combine(tag)
-            password = read_password(tag)
+            password = read_password()
             pt = crypto.decrypt_ciphertext(ct, password)
             if pt is None:
                 raise crypto.ShareError("Incorrect password.")

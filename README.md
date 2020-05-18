@@ -33,23 +33,22 @@ pip install secshrnet
 To run a server, use:
 
 ```
-secshrnetd --config <CONFIG>
+secshrnetd -c <CONFIG>
 ```
 
 The configuration file specifies which Redis instance to connect
 to. Please see [example.ini](https://github.com/dmhacker/secret-sharing-network/blob/master/example.ini) for a example configuration.
 If a configuration file isn't explicitly provided, `secshrnetd`
-will use **default.ini**.
+will use the file at **default.ini**.
 
-Alternatively, to run a client, use:
+Likewise, to run a client, use:
 
 ```
-secshrnetc --config <CONFIG> [-s/-c] <TAG> <FILE>
+secshrnetc -c <CONFIG>
 ```
 
-`-s` stands for split, which splits and distributes the file over
-the network. `-c` stands for combine, which recombines shares from
-different servers to recreate the original file.
+This will open up a prompt through which commands can be relayed.
+Available commands are `split`, `combine`, and `tags`.
 
 ## Architecture
 
