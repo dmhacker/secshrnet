@@ -134,49 +134,46 @@ class Client(host.Host):
         if num_servers == 0:
             print("No active servers on the network.")
             return
-        try:
-            command = args[0].lower()
-            if command == "split":
-                if len(args) < 3:
-                    print("Usage: split <TAG> <FILE>")
-                    return
-                tag = args[1]
-                filepath = ' '.join(args[2:])
-                threshold = read_threshold(num_servers)
-                password = read_password(tag)
-                with open(filepath, 'rb') as f:
-                    pt = f.read()
-                    ct = crypto.encrypt_plaintext(pt, password)
-                    client.split(tag, ct, threshold)
-                print("Contents of {} uploaded to tag '{}'."
-                    .format(filepath, tag))
-            elif command == "combine":
-                if len(args) < 3:
-                    print("Usage: combine <TAG> <FILE>")
-                    return
-                tag = args[1]
-                filepath = ' '.join(args[2:])
-                ct = client.combine(tag)
-                password = read_password(tag)
-                pt = crypto.decrypt_ciphertext(ct, password)
-                if pt is None:
-                    raise crypto.ShareError("Incorrect password.")
-                with open(filepath, 'wb') as f:
-                    f.write(pt)
-                print("Data for tag '{}' downloaded into {}."
-                    .format(tag, filepath))
-            elif command == "tags":
-                tags = self.list_tags()
-                if len(tags) == 0:
-                    print("No tags available on network.")
-                else:
-                    print("Available tags:")
-                    for (tag, count) in tags:
-                        print("\t- {} ({} servers)".format(tag, count))
+        command = args[0].lower()
+        if command == "split":
+            if len(args) < 3:
+                print("Usage: split <TAG> <FILE>")
+                return
+            tag = args[1]
+            filepath = ' '.join(args[2:])
+            threshold = read_threshold(num_servers)
+            password = read_password(tag)
+            with open(filepath, 'rb') as f:
+                pt = f.read()
+                ct = crypto.encrypt_plaintext(pt, password)
+                client.split(tag, ct, threshold)
+            print("Contents of {} uploaded to tag '{}'."
+                .format(filepath, tag))
+        elif command == "combine":
+            if len(args) < 3:
+                print("Usage: combine <TAG> <FILE>")
+                return
+            tag = args[1]
+            filepath = ' '.join(args[2:])
+            ct = client.combine(tag)
+            password = read_password(tag)
+            pt = crypto.decrypt_ciphertext(ct, password)
+            if pt is None:
+                raise crypto.ShareError("Incorrect password.")
+            with open(filepath, 'wb') as f:
+                f.write(pt)
+            print("Data for tag '{}' downloaded into {}."
+                .format(tag, filepath))
+        elif command == "tags":
+            tags = self.list_tags()
+            if len(tags) == 0:
+                print("No tags available on network.")
             else:
-                print("Unable to interpret command.")
-        except crypto.ShareError as e:
-            print(str(e))
+                print("Available tags:")
+                for (tag, count) in tags:
+                    print("\t- {} ({} servers)".format(tag, count))
+        else:
+            print("Unable to interpret command.")
 
     def _command_listener(self):
         while True:
@@ -184,8 +181,12 @@ class Client(host.Host):
                 num_servers = len(self.servers())
                 full_command = input("{} servers> ".format(num_servers))
                 self.handle_command(full_command.split(' '), num_servers)
+            except crypto.ShareError as e:
+                print(str(e))
+            except FileNotFoundError as e:
+                print(str(e))
             except EOFError:
-                print()
+                print("\nbye")
                 break
 
     def run(self):
