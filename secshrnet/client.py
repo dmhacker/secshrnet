@@ -119,11 +119,10 @@ class Client(host.Host):
         packet = comms_pb2.Packet()
         packet.type = comms_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
-        servset = self.servers()
-        for hid in servset:
+        for hid in self.servers():
             self.send_packet('secshrnet:server:' + hid, packet)
         packets = self._collect_packets(LIST_TIMEOUT_SECONDS)
-        hex_tags = [p.tag for p in packets if
+        hex_tags = [p.hex_tags for p in packets if
                     p.type == comms_pb2.PacketType.RETURN_TAGS]
         tag_groups = [tag.split(',') for tag in hex_tags]
         hex_tags = list(itertools.chain(*tag_groups))
