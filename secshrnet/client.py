@@ -16,10 +16,6 @@ from . import host
 from . import command
 
 
-RECOVER_TIMEOUT_SECONDS = 10
-LIST_TIMEOUT_SECONDS = 10
-
-
 def decode_tag(hex_tag):
     return base64.b16decode(hex_tag.encode()).decode()
 
@@ -43,17 +39,17 @@ class Client(host.Host):
     def servers(self):
         return self.connected_hosts('secshrnet:server:')
 
-    def _collect_packets(self, timeout_duration):
+    def _collect_packets(self, timeout_seconds=5):
         servset = self.servers()
-        timestamp = time.time() + timeout_duration
+        timestamp = time.time() + timeout_seconds
         packets = []
         self.collected_packets = queue.Queue()
         while True:
             try:
-                timeout = timestamp - time.time()
-                if timeout <= 0:
+                time_left = timestamp - time.time()
+                if time_left <= 0:
                     break
-                packet = self.collected_packets.get(timeout=timeout)
+                packet = self.collected_packets.get(timeout=time_left)
                 if packet.sender in servset:
                     packets.append(packet)
                     servset.remove(packet.sender)
@@ -85,7 +81,7 @@ class Client(host.Host):
         packet.tag = tag
         for hid in self.servers():
             self.send_packet('secshrnet:server:' + hid, packet)
-        packets = self._collect_packets(RECOVER_TIMEOUT_SECONDS)
+        packets = self._collect_packets()
         shares = [p.share for p in packets if
                   p.type == network_pb2.PacketType.RETURN_SHARE]
         return crypto.combine_shares(shares)
@@ -96,7 +92,7 @@ class Client(host.Host):
         packet.sender = self.hid
         for hid in self.servers():
             self.send_packet('secshrnet:server:' + hid, packet)
-        packets = self._collect_packets(LIST_TIMEOUT_SECONDS)
+        packets = self._collect_packets()
         hex_tags = [p.hex_tags for p in packets if
                     p.type == network_pb2.PacketType.RETURN_TAGS]
         tag_groups = [tag.split(',') for tag in hex_tags]

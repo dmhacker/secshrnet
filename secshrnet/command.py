@@ -42,7 +42,11 @@ class SplitCommand:
             return
         tag = args[0]
         filepath = ' '.join(args[1:])
-        threshold = read_threshold(len(self.client.servers()))
+        num_servers = len(self.client.servers())
+        if num_servers == 0:
+            print("No servers are online.")
+            return
+        threshold = read_threshold(num_servers)
         password = read_password()
         with open(filepath, 'rb') as f:
             pt = f.read()
@@ -69,6 +73,9 @@ class CombineCommand:
             return
         tag = args[0]
         filepath = ' '.join(args[1:])
+        if len(self.client.servers()) == 0:
+            print("No servers are online.")
+            return
         ct = self.client.combine(tag)
         password = read_password()
         pt = crypto.decrypt_ciphertext(ct, password)
@@ -93,12 +100,16 @@ class TagsCommand:
         self.client = client
 
     def handle(self, args):
+        if len(self.client.servers()) == 0:
+            print("No servers are online.")
+            return
         tags = self.client.list_tags()
         if len(tags) == 0:
-            print("No tags available on network.")
+            print("No tags found.")
         else:
             for (tag, count) in tags:
-                print(" - {}{}{} ({} servers)".format(Fore.MAGENTA, tag, Style.RESET_ALL, count))
+                print(" - {}{}{} ({} servers)".format(
+                    Fore.MAGENTA, tag, Style.RESET_ALL, count))
 
     def usage(self):
         return "tags"
@@ -114,7 +125,9 @@ class HelpCommand:
 
     def handle(self, args):
         for (cmd, obj) in self.cli.commands.items():
-            print(" - {}{}{}: {}".format(Fore.MAGENTA, obj.usage(), Style.RESET_ALL, obj.description()))
+            print(" - {}{}{}: {}"
+                  .format(Fore.MAGENTA, obj.usage(),
+                          Style.RESET_ALL, obj.description()))
 
     def usage(self):
         return "help"
@@ -148,13 +161,11 @@ class CommandInterface:
                 args = full_command.split(' ')
                 command = args[0].lower()
                 args = args[1:]
-                num_servers = len(self.client.servers())
-                if num_servers == 0:
-                    print("No servers available on network.")
-                elif command in self.commands:
+                if command in self.commands:
                     self.commands[command].handle(args)
                 else:
-                    print("Unable to interpret command.")
+                    print("Unknown command. Use `help` for "
+                          "a list of available commands.")
             except crypto.ShareError as e:
                 print(str(e))
             except FileNotFoundError as e:
