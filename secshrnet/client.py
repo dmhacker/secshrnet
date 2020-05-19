@@ -23,7 +23,7 @@ def decode_tag(hex_tag):
 class Client(host.Host):
 
     def __init__(self, config):
-        super().__init__('secshrnet:client:', config)
+        super().__init__(config, 'secshrnet:client:')
         self.cli = command.CommandInterface(self)
         self.collected_packets = None
         logger.remove(handler_id=None)
@@ -80,8 +80,7 @@ class Client(host.Host):
         packet.type = network_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
         packet.tag = tag
-        for hid in self.servers():
-            self.send_packet('secshrnet:server:' + hid, packet)
+        self.send_packet('secshrnet:broadcast', packet)
         packets = self._collect_packets()
         shares = [p.share for p in packets if
                   p.type == network_pb2.PacketType.RETURN_SHARE]
@@ -91,8 +90,7 @@ class Client(host.Host):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
-        for hid in self.servers():
-            self.send_packet('secshrnet:server:' + hid, packet)
+        self.send_packet('secshrnet:broadcast', packet)
         packets = self._collect_packets()
         hex_tags = [p.hex_tags for p in packets if
                     p.type == network_pb2.PacketType.RETURN_TAGS]
@@ -105,8 +103,7 @@ class Client(host.Host):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.INFO_MACHINE
         packet.sender = self.hid
-        for hid in self.servers():
-            self.send_packet('secshrnet:server:' + hid, packet)
+        self.send_packet('secshrnet:broadcast', packet)
         packets = self._collect_packets()
         return [(p.sender, p.machine) for p in packets]
 

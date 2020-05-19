@@ -12,7 +12,7 @@ from . import network_pb2
 
 class Host(ABC):
 
-    def __init__(self, channel_prefix, config):
+    def __init__(self, config, channel_prefix, channel_broadcast=None):
         '''
         :param str channel_prefix: Prefix to be prepended to our channel name
         :param configparser.Config config: Redis configuration file
@@ -25,6 +25,7 @@ class Host(ABC):
         self.received_packets = queue.Queue()
         self.hid = str(uuid.uuid4())
         self.hchannel = channel_prefix + self.hid
+        self.bchannel = channel_broadcast
 
     @abstractmethod
     def handle_packet(self, packet):
@@ -62,6 +63,8 @@ class Host(ABC):
         It will poll for packets and forward them to the packet processor.
         '''
         self.pubsub.subscribe(self.hchannel)
+        if self.bchannel:
+            self.pubsub.subscribe(self.bchannel)
         logger.info("Packet listener thread is now online.")
         for message in self.pubsub.listen():
             if message['type'] == 'message':

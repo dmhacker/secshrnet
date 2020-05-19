@@ -21,7 +21,7 @@ def encode_tag(raw_tag):
 class Server(host.Host):
 
     def __init__(self, root_dir, config):
-        super().__init__('secshrnet:server:', config)
+        super().__init__(config, 'secshrnet:server:', 'secshrnet:broadcast')
         self.share_dir = os.path.join(root_dir, 'shares')
         pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
         logger.add(os.path.join(root_dir, "secshrnetd.log"))
