@@ -9,6 +9,12 @@ message Share {
     bytes ciphertext_hash = 4;
 }
 
+message Machine {
+    string os = 1;
+    string ip = 2;
+    string loc = 3;
+}
+
 enum PacketType {
     STORE_SHARE = 0;
     RECOVER_SHARE = 1;
@@ -17,6 +23,8 @@ enum PacketType {
     LIST_TAGS = 4;
     RETURN_TAGS = 5;
     NO_TAGS = 6;
+    INFO_MACHINE = 7;
+    RETURN_MACHINE = 8;
 }
 
 message Packet {
@@ -25,4 +33,5 @@ message Packet {
     string tag = 4;
     Share share = 5;
     string hex_tags = 6;
+    Machine machine = 7;
 }

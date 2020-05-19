@@ -32,7 +32,8 @@ class Client(host.Host):
         if packet.type == network_pb2.PacketType.RETURN_SHARE or \
                 packet.type == network_pb2.PacketType.NO_SHARE or \
                 packet.type == network_pb2.PacketType.RETURN_TAGS or \
-                packet.type == network_pb2.PacketType.NO_TAGS:
+                packet.type == network_pb2.PacketType.NO_TAGS or \
+                packet.type == network_pb2.PacketType.RETURN_MACHINE:
             if self.collected_packets:
                 self.collected_packets.put(packet)
 
@@ -86,7 +87,7 @@ class Client(host.Host):
                   p.type == network_pb2.PacketType.RETURN_SHARE]
         return crypto.combine_shares(shares)
 
-    def list_tags(self):
+    def tags(self):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
@@ -99,6 +100,15 @@ class Client(host.Host):
         hex_tags = list(itertools.chain(*tag_groups))
         tags = [decode_tag(tag) for tag in hex_tags]
         return list(Counter(tags).items())
+
+    def server_information(self):
+        packet = network_pb2.Packet()
+        packet.type = network_pb2.PacketType.INFO_MACHINE
+        packet.sender = self.hid
+        for hid in self.servers():
+            self.send_packet('secshrnet:server:' + hid, packet)
+        packets = self._collect_packets()
+        return [(p.sender, p.machine) for p in packets]
 
     def run(self):
         super().run()

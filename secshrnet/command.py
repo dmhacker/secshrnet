@@ -103,7 +103,7 @@ class TagsCommand:
         if len(self.client.servers()) == 0:
             print("No servers are online.")
             return
-        tags = self.client.list_tags()
+        tags = self.client.tags()
         if len(tags) == 0:
             print("No tags found.")
         else:
@@ -116,6 +116,31 @@ class TagsCommand:
 
     def description(self):
         return "Print all tags stored in the network"
+
+
+class ServersCommand:
+
+    def __init__(self, client):
+        self.client = client
+
+    def handle(self, args):
+        if len(self.client.servers()) == 0:
+            print("No servers are online.")
+            return
+        machines = self.client.server_information()
+        for (hid, machine) in machines:
+            print("{}{}{}:"
+                  .format(Fore.MAGENTA, hid, Style.RESET_ALL))
+            print(" | OS = {}".format(machine.os))
+            print(" | IP = {}".format(machine.ip))
+            print(" | Location = {}".format(machine.loc))
+
+    def usage(self):
+        return "servers"
+
+    def description(self):
+        return "Dump information about all active servers"
+
 
 
 class HelpCommand:
@@ -144,6 +169,7 @@ class CommandInterface:
             'split': SplitCommand(client),
             'combine': CombineCommand(client),
             'tags': TagsCommand(client),
+            'servers': ServersCommand(client),
             'help': HelpCommand(self)
         }
         readline.parse_and_bind('tab: complete')

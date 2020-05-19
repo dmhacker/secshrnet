@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='secshrnet',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"}\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t*}\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x62\x06proto3'
+  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\".\n\x07Machine\x12\n\n\x02os\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0b\n\x03loc\x18\x03 \x01(\t\"\xa2\x01\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t\x12#\n\x07machine\x18\x07 \x01(\x0b\x32\x12.secshrnet.Machine*\xa3\x01\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x12\x10\n\x0cINFO_MACHINE\x10\x07\x12\x12\n\x0eRETURN_MACHINE\x10\x08\x62\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -56,11 +56,19 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
       name='NO_TAGS', index=6, number=6,
       serialized_options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='INFO_MACHINE', index=7, number=7,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='RETURN_MACHINE', index=8, number=8,
+      serialized_options=None,
+      type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=243,
-  serialized_end=368,
+  serialized_start=330,
+  serialized_end=493,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
@@ -72,6 +80,8 @@ NO_SHARE = 3
 LIST_TAGS = 4
 RETURN_TAGS = 5
 NO_TAGS = 6
+INFO_MACHINE = 7
+RETURN_MACHINE = 8
 
 
 
@@ -127,6 +137,51 @@ _SHARE = _descriptor.Descriptor(
 )
 
 
+_MACHINE = _descriptor.Descriptor(
+  name='Machine',
+  full_name='secshrnet.Machine',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='os', full_name='secshrnet.Machine.os', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='ip', full_name='secshrnet.Machine.ip', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='loc', full_name='secshrnet.Machine.loc', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=116,
+  serialized_end=162,
+)
+
+
 _PACKET = _descriptor.Descriptor(
   name='Packet',
   full_name='secshrnet.Packet',
@@ -169,6 +224,13 @@ _PACKET = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='machine', full_name='secshrnet.Packet.machine', index=5,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -181,13 +243,15 @@ _PACKET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=116,
-  serialized_end=241,
+  serialized_start=165,
+  serialized_end=327,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKETTYPE
 _PACKET.fields_by_name['share'].message_type = _SHARE
+_PACKET.fields_by_name['machine'].message_type = _MACHINE
 DESCRIPTOR.message_types_by_name['Share'] = _SHARE
+DESCRIPTOR.message_types_by_name['Machine'] = _MACHINE
 DESCRIPTOR.message_types_by_name['Packet'] = _PACKET
 DESCRIPTOR.enum_types_by_name['PacketType'] = _PACKETTYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -198,6 +262,13 @@ Share = _reflection.GeneratedProtocolMessageType('Share', (_message.Message,), {
   # @@protoc_insertion_point(class_scope:secshrnet.Share)
   })
 _sym_db.RegisterMessage(Share)
+
+Machine = _reflection.GeneratedProtocolMessageType('Machine', (_message.Message,), {
+  'DESCRIPTOR' : _MACHINE,
+  '__module__' : 'network_pb2'
+  # @@protoc_insertion_point(class_scope:secshrnet.Machine)
+  })
+_sym_db.RegisterMessage(Machine)
 
 Packet = _reflection.GeneratedProtocolMessageType('Packet', (_message.Message,), {
   'DESCRIPTOR' : _PACKET,
