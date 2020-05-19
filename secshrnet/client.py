@@ -124,15 +124,10 @@ def main():
                         help='path to the redis config file')
     args = parser.parse_args()
     config = configparser.ConfigParser()
-    if args.config:
-        config.read(args.config)
-    else:
-        config['Redis'] = {}
-        config['Redis']['Host'] = '127.0.0.1'
-        config['Redis']['Port'] = '6379'
-        config['Redis']['Password'] = ''
-    client = Client(config)
-    client.run()
+    if args.config is None:
+        args.config = os.path.join(args.root, 'secshrnet.conf')
+    config.read(args.config)
+    Client(config).run()
 
 
 if __name__ == '__main__':

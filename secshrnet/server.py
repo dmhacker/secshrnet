@@ -92,17 +92,13 @@ def main():
     parser.add_argument('-r', '--root',
                         default=os.path.expandvars('$HOME/.secshrnet'),
                         help='root directory to write shares to')
-    parser.add_argument('-c', '--config', type=str,
+    parser.add_argument('-c', '--config', type=str
                         help='path to the redis config file')
     args = parser.parse_args()
     config = configparser.ConfigParser()
-    if args.config:
-        config.read(args.config)
-    else:
-        config['Redis'] = {}
-        config['Redis']['Host'] = '127.0.0.1'
-        config['Redis']['Port'] = '6379'
-        config['Redis']['Password'] = ''
+    if args.config is None:
+        args.config = os.path.join(args.root, 'secshrnet.conf')
+    config.read(args.config)
     Server(args.root, config).run()
 
 

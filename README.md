@@ -36,15 +36,15 @@ To run a server, use:
 secshrnetd -c <CONFIG> -r <ROOT_DIRECTORY>
 ```
 
-The configuration file specifies which Redis instance to connect
-to. Please see [example.conf](https://github.com/dmhacker/secret-sharing-network/blob/master/example.conf) for an example configuration.
-If a configuration file isn't explicitly provided, `secshrnetd`
-will assume you are attempting to connect to the default
-Redis instance at localhost:6379 with no password.
-
 The root directory specifies where the secshrnet daemon will
 keep its share files along with other metadata. This defaults 
 to **$HOME/.secshrnet**.
+
+The configuration file specifies which Redis instance to connect
+to. Please see [example.conf](https://github.com/dmhacker/secret-sharing-network/blob/master/example.conf) for an example configuration.
+If a configuration file isn't explicitly provided, `secshrnetd`
+will assume the configuration file can be found at the
+**secshrnet.conf** in the root directory.
 
 To run a client, use:
 
