@@ -8,9 +8,12 @@ import argparse
 import base64
 import signal
 import platform
+import time
 
 from . import network_pb2
 from . import host
+
+IP_EXPIRATION_SECONDS = 3600
 
 
 def encode_tag(raw_tag):
@@ -22,9 +25,21 @@ class Server(host.Host):
     def __init__(self, root_dir, config):
         super().__init__(config, 'secshrnet:server:', 'secshrnet:broadcast')
         self.share_dir = os.path.join(root_dir, 'shares')
+        self.ip_cache = (None, None)
         pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
         logger.add(os.path.join(root_dir, "secshrnetd.log"))
         logger.info("Session host ID is {}.".format(self.hid))
+
+    def ip_address(self):
+        ip_addr, last_check = self.ip_cache
+        if last_check is None or \
+                time.time() - last_check >= IP_EXPIRATION_SECONDS:
+            logger.info("Pinging Amazon AWS for external IP address.")
+            ip_addr = urllib.request.urlopen(
+                'https://checkip.amazonaws.com').read().strip()
+            last_check = time.time()
+            self.ip_cache = (ip_addr, last_check)
+        return ip_addr
 
     def handle_packet(self, packet):
         if packet.type == network_pb2.PacketType.STORE_SHARE:
@@ -71,8 +86,7 @@ class Server(host.Host):
             response.machine.os = "{} {}".format(platform.system(),
                                                  platform.release())
             response.machine.name = platform.node()
-            response.machine.ip = urllib.request.urlopen(
-                'https://checkip.amazonaws.com').read().strip()
+            response.machine.ip = self.ip_address()
             logger.info("Reporting machine information to host {}."
                         .format(packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)

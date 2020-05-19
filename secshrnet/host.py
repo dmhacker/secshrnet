@@ -21,6 +21,7 @@ class Host(ABC):
             host=config['Redis']['Host'],
             port=int(config['Redis']['Port']),
             password=config['Redis']['Password'])
+        self.redis.ping()
         self.pubsub = self.redis.pubsub()
         self.received_packets = queue.Queue()
         self.hid = str(uuid.uuid4())
@@ -65,7 +66,7 @@ class Host(ABC):
         self.pubsub.subscribe(self.hchannel)
         if self.bchannel:
             self.pubsub.subscribe(self.bchannel)
-        logger.info("Packet listener thread is now online.")
+        logger.info("Packet listener thread is starting.")
         for message in self.pubsub.listen():
             if message['type'] == 'message':
                 packet = network_pb2.Packet()
@@ -82,7 +83,7 @@ class Host(ABC):
         packets. It will wait on a blocking queue for packets to be
         inserted from the packet listener thread.
         '''
-        logger.info("Packet processing thread is now online.")
+        logger.info("Packet processor thread is starting.")
         while True:
             packet = self.received_packets.get()
             self.handle_packet(packet)
