@@ -98,6 +98,8 @@ def main():
     config = configparser.ConfigParser()
     if args.config is None:
         args.config = os.path.join(args.root, 'secshrnet.conf')
+    with open(args.config, 'r') as f:
+        pass
     config.read(args.config)
     Server(args.root, config).run()
 
