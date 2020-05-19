@@ -25,7 +25,7 @@ class Client(host.Host):
     def __init__(self, config):
         super().__init__(config, 'secshrnet:client:')
         self.cli = command.CommandInterface(self)
-        self.collected_packets = None
+        self.buffer = None
         logger.remove(handler_id=None)
 
     def handle_packet(self, packet):
@@ -34,23 +34,25 @@ class Client(host.Host):
                 packet.type == network_pb2.PacketType.RETURN_TAGS or \
                 packet.type == network_pb2.PacketType.NO_TAGS or \
                 packet.type == network_pb2.PacketType.RETURN_MACHINE:
-            if self.collected_packets:
-                self.collected_packets.put(packet)
+            if self.buffer:
+                self.buffer.put(packet)
 
     def servers(self):
         return self.connected_hosts('secshrnet:server:')
 
-    def _collect_packets(self, timeout_seconds=5):
+    def _buffer_passively(self):
+        self.buffer = queue.Queue()
+
+    def _buffer_actively(self, timeout_seconds=5):
         servset = self.servers()
         timestamp = time.time() + timeout_seconds
         packets = []
-        self.collected_packets = queue.Queue()
         while True:
             try:
                 time_left = timestamp - time.time()
                 if time_left <= 0:
                     break
-                packet = self.collected_packets.get(timeout=time_left)
+                packet = self.buffer.get(timeout=time_left)
                 if packet.sender in servset:
                     packets.append(packet)
                     servset.remove(packet.sender)
@@ -58,7 +60,7 @@ class Client(host.Host):
                         break
             except queue.Empty:
                 break
-        self.collected_packets = None
+        self.buffer = None
         return packets
 
     def split(self, tag, plaintext, threshold):
@@ -80,8 +82,9 @@ class Client(host.Host):
         packet.type = network_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
         packet.tag = tag
+        self._buffer_passively()
         self.send_packet('secshrnet:broadcast', packet)
-        packets = self._collect_packets()
+        packets = self._buffer_actively()
         shares = [p.share for p in packets if
                   p.type == network_pb2.PacketType.RETURN_SHARE]
         return crypto.combine_shares(shares)
@@ -90,8 +93,9 @@ class Client(host.Host):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
+        self._buffer_passively()
         self.send_packet('secshrnet:broadcast', packet)
-        packets = self._collect_packets()
+        packets = self._buffer_actively()
         hex_tags = [p.hex_tags for p in packets if
                     p.type == network_pb2.PacketType.RETURN_TAGS]
         tag_groups = [tag.split(',') for tag in hex_tags]
@@ -103,8 +107,9 @@ class Client(host.Host):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.INFO_MACHINE
         packet.sender = self.hid
+        self._buffer_passively()
         self.send_packet('secshrnet:broadcast', packet)
-        packets = self._collect_packets()
+        packets = self._buffer_actively()
         return [(p.sender, p.machine) for p in packets]
 
     def run(self):
