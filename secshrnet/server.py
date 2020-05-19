@@ -92,7 +92,7 @@ def main():
     parser.add_argument('-r', '--root',
                         default=os.path.expandvars('$HOME/.secshrnet'),
                         help='root directory to write shares to')
-    parser.add_argument('-c', '--config', type=str
+    parser.add_argument('-c', '--config', type=str,
                         help='path to the redis config file')
     args = parser.parse_args()
     config = configparser.ConfigParser()
