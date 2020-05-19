@@ -145,13 +145,13 @@ class CommandInterface:
                     Fore.RED if num_servers == 0 else Fore.GREEN,
                     num_servers, Style.RESET_ALL)
                 full_command = input(prompt)
-                if num_servers == 0:
-                    print("No servers available on network.")
-                    continue
                 args = full_command.split(' ')
                 command = args[0].lower()
                 args = args[1:]
-                if command in self.commands:
+                num_servers = len(self.client.servers())
+                if num_servers == 0:
+                    print("No servers available on network.")
+                elif command in self.commands:
                     self.commands[command].handle(args)
                 else:
                     print("Unable to interpret command.")
