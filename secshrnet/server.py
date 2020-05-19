@@ -1,5 +1,6 @@
 from loguru import logger
 
+import urllib.request
 import pathlib
 import os
 import configparser
@@ -7,8 +8,6 @@ import argparse
 import base64
 import signal
 import platform
-
-import geocoder
 
 from . import network_pb2
 from . import host
@@ -66,14 +65,14 @@ class Server(host.Host):
                         .format(len(filenames), packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
         elif packet.type == network_pb2.PacketType.INFO_MACHINE:
-            geolocation = geocoder.ip('me')
             response = network_pb2.Packet()
             response.sender = self.hid
             response.type = network_pb2.PacketType.RETURN_MACHINE
             response.machine.os = "{} {}".format(platform.system(),
                                                  platform.release())
-            response.machine.ip = geolocation.ip
-            response.machine.loc = geolocation.address
+            response.machine.name = platform.node()
+            response.machine.ip = urllib.request.urlopen(
+                'https://checkip.amazonaws.com').read().strip()
             logger.info("Reporting machine information to host {}."
                         .format(packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)

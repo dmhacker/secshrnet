@@ -3,4 +3,3 @@ protobuf
 redis
 loguru
 colorama
-geocoder

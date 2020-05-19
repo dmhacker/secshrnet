@@ -12,7 +12,7 @@ message Share {
 message Machine {
     string os = 1;
     string ip = 2;
-    string loc = 3;
+    string name = 3;
 }
 
 enum PacketType {

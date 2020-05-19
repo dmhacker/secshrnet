@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='secshrnet',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\".\n\x07Machine\x12\n\n\x02os\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0b\n\x03loc\x18\x03 \x01(\t\"\xa2\x01\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t\x12#\n\x07machine\x18\x07 \x01(\x0b\x32\x12.secshrnet.Machine*\xa3\x01\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x12\x10\n\x0cINFO_MACHINE\x10\x07\x12\x12\n\x0eRETURN_MACHINE\x10\x08\x62\x06proto3'
+  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"/\n\x07Machine\x12\n\n\x02os\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\"\xa2\x01\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t\x12#\n\x07machine\x18\x07 \x01(\x0b\x32\x12.secshrnet.Machine*\xa3\x01\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x12\x10\n\x0cINFO_MACHINE\x10\x07\x12\x12\n\x0eRETURN_MACHINE\x10\x08\x62\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -67,8 +67,8 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=330,
-  serialized_end=493,
+  serialized_start=331,
+  serialized_end=494,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
@@ -159,7 +159,7 @@ _MACHINE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='loc', full_name='secshrnet.Machine.loc', index=2,
+      name='name', full_name='secshrnet.Machine.name', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -178,7 +178,7 @@ _MACHINE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=116,
-  serialized_end=162,
+  serialized_end=163,
 )
 
 
@@ -243,8 +243,8 @@ _PACKET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=165,
-  serialized_end=327,
+  serialized_start=166,
+  serialized_end=328,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKETTYPE

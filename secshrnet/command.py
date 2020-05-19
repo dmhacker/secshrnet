@@ -133,7 +133,7 @@ class ServersCommand:
                   .format(Fore.MAGENTA, hid, Style.RESET_ALL))
             print(" | OS = {}".format(machine.os))
             print(" | IP = {}".format(machine.ip))
-            print(" | Location = {}".format(machine.loc))
+            print(" | Hostname = {}".format(machine.name))
 
     def usage(self):
         return "servers"
