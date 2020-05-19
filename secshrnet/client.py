@@ -121,12 +121,12 @@ class Client(host.Host):
 def main():
     parser = argparse.ArgumentParser(
         description='Run a secshrnet client.')
-    parser.add_argument('-c', '--config', type=str,
+    parser.add_argument('-c', '--config',
+                        default=os.path.expandvars(
+                            '$HOME/.secshrnet/secshrnet.conf'),
                         help='path to the redis config file')
     args = parser.parse_args()
     config = configparser.ConfigParser()
-    if args.config is None:
-        args.config = os.path.join(args.root, 'secshrnet.conf')
     with open(args.config, 'r') as f:
         pass
     config.read(args.config)
