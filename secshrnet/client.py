@@ -2,7 +2,7 @@ from loguru import logger
 from colorama import Fore, Style
 from collections import Counter
 from threading import Lock
-from queue import Queue
+from queue import Queue, Empty
 
 import os
 import configparser
@@ -60,7 +60,7 @@ class Client(host.Host):
                     servset.remove(packet.sender)
                     if len(servset) == 0:
                         break
-            except queue.Empty:
+            except Empty:
                 break
         with self.buffer_mutex:
             self.buffer_types.clear()
