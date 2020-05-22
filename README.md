@@ -1,15 +1,15 @@
-# secret-sharing-network
+# secshrnet
 
-This project is an attempt at creating a network 
-of machines through which confidential files could be stored 
-securely and redundantly via usage of several security mechanisms,
-namely secret sharing, key derivation, and file encryption.
+secshrnet stands for **secret-sharing-network**. It
+aims to provide a way through which confidential files could
+be stored securely and redundantly across a network of
+participating servers. Several security mechanisms are
+used to protect this data, namely secret sharing, key
+derivation, and file encryption.
 
-Any piece of data stored on the network is identified by a user-defined,
-unique tag; this tag is analogous to an absolute path on a filesystem. 
-However, unlike a filesystem, data corresponding to tags are stored in 
-a flat non-hierarchical structure; that is, tags sharing the same prefix
-are unrelated.
+_This project is in its infancy. Don't trust it with your most
+valuable files unless you've read through the source code and can
+verify its security._
 
 ## Setup
 
@@ -19,7 +19,7 @@ Install using `pip` via:
 pip install secshrnet
 ```
 
-To run a server, use:
+### Run a Server
 
 ```
 secshrnetd -c <CONFIG_FILE> -r <ROOT_DIRECTORY>
@@ -35,7 +35,11 @@ If a configuration file isn't explicitly provided, `secshrnetd`
 will assume the configuration file can be found at
 **secshrnet.conf** in the root directory.
 
-To run a client, use:
+Do note that it's possible to run multiple servers on the
+same machine. However, each server should use a different
+root directory for storing shares.
+
+### Run a Client
 
 ```
 secshrnetc -c <CONFIG_FILE>
@@ -47,6 +51,12 @@ file will be assumed to be at **$HOME/.secshrnet/secshrnet.conf**
 if not explicitly passed in.
 
 ## Architecture
+
+Any piece of data stored on the network is identified by a user-defined,
+unique tag; this tag is analogous to an absolute path on a filesystem. 
+However, unlike a filesystem, data corresponding to tags are stored in 
+a flat non-hierarchical structure; that is, tags sharing the same prefix
+are unrelated.
 
 The architecture of the network is fairly simplistic. Within this
 network, at any point in time, there are some amount of participating 
@@ -89,6 +99,10 @@ unique channel on Redis, and other hosts that want to send message
 to that host can simply route the packet through the unique channel.
 Host discovery is done via channel pattern matching.
 
+Do note that all Redis traffic is sent through an encrypted
+tunnel, which provides yet another layer of security on top of the
+cryptography that secshrnet already provides.
+
 ### Cryptography
 
 File encryption is implemented via a combination of the scrypt key 
@@ -99,3 +113,7 @@ Secret Sharing Scheme and the AES-128 cipher. Every participating
 server gets a copy of the encrypted ciphertext and a share of a 
 randomly-generated secret key. The secret key is only reproducible
 if enough servers are willing to collaborate in the network.
+
+Cryptography is not implemented by secshrnet directly. Instead, it
+uses the pycryptodome module, which implements these cryptographic
+primitives efficiently and securely.
