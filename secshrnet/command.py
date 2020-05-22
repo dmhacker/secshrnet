@@ -10,22 +10,23 @@ def read_threshold(args, num_servers):
     try:
         if len(args) < 3:
             threshold = num_servers // 2 + 1
-            print("Minimum share count is defaulting to {}."
+            print("Using a default recovery threshold of {}."
                   .format(threshold))
         else:
             threshold = int(args[2])
             if threshold < 1 or threshold > num_servers:
-                print("Minimum share count should be between 1 and {}."
+                print("Recovery threshold should be between 1 and {}."
                       .format(num_servers))
                 return None
         return threshold
     except ValueError:
-        print("Minimum share count should be an integer.")
+        print("Recovery threshold should be an integer.")
         return None
 
 
 def read_password():
-    return getpass.getpass("Password: ").encode('utf-8')
+    prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
+    return getpass.getpass(prompt).encode('utf-8')
 
 
 class SplitCommand:
@@ -49,15 +50,13 @@ class SplitCommand:
         password = read_password()
         with open(filepath, 'rb') as f:
             pt = f.read()
-            print("Encryption may take some time. Please be patient.")
             ct = crypto.encrypt_plaintext(pt, password)
             servers = self.client.split(tag, ct, threshold)
-        print("{}Uploaded {} to tag '{}' on {} servers.{}"
-            .format(Fore.YELLOW, filepath, tag,
-                    len(servers), Style.RESET_ALL))
+        print("Upload complete. {} servers accepted shares."
+              .format(len(servers)))
 
     def usage(self):
-        return "split [FILE] [TAG] {SHARES}"
+        return "split [FILE] [TAG] {THRESHOLD}"
 
     def description(self):
         return "Store a file at the specified tag"
@@ -79,14 +78,13 @@ class CombineCommand:
             return
         ct = self.client.combine(tag)
         password = read_password()
-        print("Decryption may take some time. Please be patient.")
         pt = crypto.decrypt_ciphertext(ct, password)
         if pt is None:
             raise crypto.ShareError("Incorrect password.")
         with open(filepath, 'wb') as f:
             f.write(pt)
-        print("{}Downloaded tag '{}' into {}.{}"
-            .format(Fore.YELLOW, tag, filepath, Style.RESET_ALL))
+        print("Download complete. '{}' was recovered."
+              .format(filepath))
 
     def usage(self):
         return "combine [TAG] [FILE]"
