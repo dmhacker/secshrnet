@@ -25,11 +25,11 @@ def read_threshold(args, num_servers):
 
 
 def read_password():
-    prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
+    prompt = "Password: "
     return getpass.getpass(prompt).encode('utf-8')
 
 
-class SplitCommand:
+class SaveCommand:
 
     def __init__(self, client):
         self.client = client
@@ -52,17 +52,18 @@ class SplitCommand:
             pt = f.read()
             ct = crypto.encrypt_plaintext(pt, password)
             servers = self.client.split(tag, ct, threshold)
-        print("Upload complete. {} servers accepted shares."
-              .format(len(servers)))
+        print("{}File '{}' was split across {} servers.{}"
+              .format(Fore.MAGENTA, filepath,
+                      len(servers), Style.RESET_ALL))
 
     def usage(self):
-        return "split [FILE] [TAG] {THRESHOLD}"
+        return "save [FILE] [TAG] {THRESHOLD}"
 
     def description(self):
-        return "Store a file at the specified tag"
+        return "Save a file at the specified tag"
 
 
-class CombineCommand:
+class LoadCommand:
 
     def __init__(self, client):
         self.client = client
@@ -76,21 +77,21 @@ class CombineCommand:
         if len(self.client.servers()) == 0:
             print("No servers are online.")
             return
-        ct = self.client.combine(tag)
+        ct = self.client.recombine(tag)
         password = read_password()
         pt = crypto.decrypt_ciphertext(ct, password)
         if pt is None:
             raise crypto.ShareError("Incorrect password.")
         with open(filepath, 'wb') as f:
             f.write(pt)
-        print("Download complete. '{}' was recovered."
-              .format(filepath))
+        print("{}File '{}' was recovered successfully.{}"
+              .format(Fore.MAGENTA, filepath, Style.RESET_ALL))
 
     def usage(self):
-        return "combine [TAG] [FILE]"
+        return "load [TAG] [FILE]"
 
     def description(self):
-        return "Recreate the file stored at a tag"
+        return "Load data at a tag into a file"
 
 
 
@@ -167,8 +168,8 @@ class CommandInterface:
     def __init__(self, client):
         self.client = client
         self.commands = {
-            'split': SplitCommand(client),
-            'combine': CombineCommand(client),
+            'save': SaveCommand(client),
+            'load': LoadCommand(client),
             'tags': TagsCommand(client),
             'servers': ServersCommand(client),
             'help': HelpCommand(self)

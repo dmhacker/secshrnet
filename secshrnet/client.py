@@ -84,7 +84,7 @@ class Client(host.Host):
         packets = self._close_buffer()
         return [p.sender for p in packets]
 
-    def combine(self, tag):
+    def recombine(self, tag):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.RECOVER_SHARE
         packet.sender = self.hid
