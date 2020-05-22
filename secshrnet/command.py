@@ -6,29 +6,26 @@ import getpass
 from . import crypto
 
 
-def read_threshold(num_hosts):
-    while True:
-        default_threshold = num_hosts // 2 + 1
-        prompt = "{}Minimum shares (default = {}){}: ".format(
-            Fore.YELLOW, num_hosts, Style.RESET_ALL)
-        threshold_str = input(prompt)
-        if threshold_str == "":
-            threshold = default_threshold
-            break
-        try:
-            threshold = int(threshold_str)
-            if threshold >= 1 and threshold <= num_hosts:
-                break
-        except ValueError:
-            pass
-        print("Please enter a number between 1 and {}."
-              .format(num_hosts))
-    return threshold
+def read_threshold(args, num_servers):
+    try:
+        if len(args) < 3:
+            threshold = num_servers // 2 + 1
+            print("Minimum share count is defaulting to {}."
+                  .format(threshold))
+        else:
+            threshold = int(args[2])
+            if threshold < 1 or threshold > num_servers:
+                print("Minimum share count should be between 1 and {}."
+                      .format(num_servers))
+                return None
+        return threshold
+    except ValueError:
+        print("Minimum share count should be an integer.")
+        return None
 
 
 def read_password():
-    prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
-    return getpass.getpass(prompt).encode('utf-8')
+    return getpass.getpass("Password: ").encode('utf-8')
 
 
 class SplitCommand:
@@ -37,7 +34,7 @@ class SplitCommand:
         self.client = client
 
     def handle(self, args):
-        if len(args) != 2:
+        if len(args) < 2 or len(args) > 3:
             print("Usage:", self.usage())
             return
         filepath = args[0]
@@ -46,18 +43,21 @@ class SplitCommand:
         if num_servers == 0:
             print("No servers are online.")
             return
-        threshold = read_threshold(num_servers)
+        threshold = read_threshold(args, num_servers)
+        if threshold is None:
+            return
         password = read_password()
         with open(filepath, 'rb') as f:
             pt = f.read()
             print("Encryption may take some time. Please be patient.")
             ct = crypto.encrypt_plaintext(pt, password)
             servers = self.client.split(tag, ct, threshold)
-        print("Uploaded {} to tag '{}' on {} servers."
-            .format(filepath, tag, len(servers)))
+        print("{}Uploaded {} to tag '{}' on {} servers.{}"
+            .format(Fore.YELLOW, filepath, tag,
+                    len(servers), Style.RESET_ALL))
 
     def usage(self):
-        return "split <FILE> <TAG>"
+        return "split [FILE] [TAG] {SHARES}"
 
     def description(self):
         return "Store a file at the specified tag"
@@ -85,11 +85,11 @@ class CombineCommand:
             raise crypto.ShareError("Incorrect password.")
         with open(filepath, 'wb') as f:
             f.write(pt)
-        print("Downloaded tag '{}' into {}."
-            .format(tag, filepath))
+        print("{}Downloaded tag '{}' into {}.{}"
+            .format(Fore.YELLOW, tag, filepath, Style.RESET_ALL))
 
     def usage(self):
-        return "combine <TAG> <FILE>"
+        return "combine [TAG] [FILE]"
 
     def description(self):
         return "Recreate the file stored at a tag"
@@ -151,6 +151,7 @@ class HelpCommand:
         self.cli = cli
 
     def handle(self, args):
+        print("[] = required. {} = optional.")
         for (cmd, obj) in self.cli.commands.items():
             print(" - {}{}{}: {}"
                   .format(Fore.MAGENTA, obj.usage(),
