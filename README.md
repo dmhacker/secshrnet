@@ -1,25 +1,14 @@
 # secret-sharing-network
 
-The secshrnet project is an attempt at creating a network 
+This project is an attempt at creating a network 
 of machines through which confidential files could be stored 
-securely and redundantly via application of a secret sharing scheme.
-In general, the following principles hold:
+securely and redundantly via usage of several security mechanisms,
+namely secret sharing, key derivation, and file encryption.
 
-* If a specific file is compromised, data will remain 
-uncompromised up to some user-defined level via usage of
-secret sharing.
-* If an entire machine is compromised, even if shares can 
-be readily aggregated by an attacker, data on the network
-will still remain encrypted via password protection.
-* In the event that one or several machines stop communicating, 
-data can still be recovered using the remaining machines.
-* It is easy and cost-efficient to bring a new node into the 
-network.
-
-A piece of data is identified by a unique tag over the network
-with a tag being akin to a file's path on some filesystem. However,
-unlike a filesystem, data corresponding to tags are stored in a flat 
-non-hierarchical structure; that is, tags sharing the same prefix
+Any piece of data stored on the network is identified by a user-defined,
+unique tag; this tag is analogous to an absolute path on a filesystem. 
+However, unlike a filesystem, data corresponding to tags are stored in 
+a flat non-hierarchical structure; that is, tags sharing the same prefix
 are unrelated.
 
 ## Setup
@@ -100,13 +89,15 @@ Host discovery is done via channel pattern matching.
 
 ### Cryptography
 
-For password protection, passwords are hashed using BLAKE2S to produce
-a cryptographic hash. This hash then serves as the secret key for a
-ChaCha20-Poly1305 cipher that the plaintext file is fed into.
+File encryption is implemented via usage of the scrypt key derivation 
+function and the ChaCha20-Poly1305 cipher. scrypt is used to derive
+a secret key from a user-inputted password, and ChaCha20-Poly1305 uses
+this secret key to encrypt the contents of the file before it is
+uploaded to the network.
 
-For secret sharing, a combination of Shamir's Secret Sharing Scheme
+With respect to secret sharing, a combination of Shamir's Secret Sharing Scheme
 and the AES-128 cipher is used. A random 16-byte key is generated and is
 then used by AES-128 to encrypt the file. This key is then split using
 Shamir's Secret Sharing Scheme into N shares with at least K shares 
 required to reconstruct the key. Every server then gets a copy of the
-encrypted ciphertext and a share of the key.
+encrypted ciphertext and a share of the key to store.
