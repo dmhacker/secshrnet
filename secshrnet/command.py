@@ -37,11 +37,11 @@ class SplitCommand:
         self.client = client
 
     def handle(self, args):
-        if len(args) < 2:
+        if len(args) != 2:
             print("Usage:", self.usage())
             return
-        tag = args[0]
-        filepath = ' '.join(args[1:])
+        filepath = args[0]
+        tag = args[1]
         num_servers = len(self.client.servers())
         if num_servers == 0:
             print("No servers are online.")
@@ -52,12 +52,12 @@ class SplitCommand:
             pt = f.read()
             print("Encryption may take some time. Please be patient.")
             ct = crypto.encrypt_plaintext(pt, password)
-            self.client.split(tag, ct, threshold)
-        print("Contents of {} uploaded to tag '{}'."
-            .format(filepath, tag))
+            servers = self.client.split(tag, ct, threshold)
+        print("Uploaded {} to tag '{}' on {} servers."
+            .format(filepath, tag, len(servers)))
 
     def usage(self):
-        return "split <TAG> <FILE>"
+        return "split <FILE> <TAG>"
 
     def description(self):
         return "Store a file at the specified tag"
@@ -69,11 +69,11 @@ class CombineCommand:
         self.client = client
 
     def handle(self, args):
-        if len(args) < 2:
+        if len(args) != 2:
             print("Usage:", self.usage())
             return
         tag = args[0]
-        filepath = ' '.join(args[1:])
+        filepath = args[1]
         if len(self.client.servers()) == 0:
             print("No servers are online.")
             return
@@ -85,7 +85,7 @@ class CombineCommand:
             raise crypto.ShareError("Incorrect password.")
         with open(filepath, 'wb') as f:
             f.write(pt)
-        print("Data for tag '{}' downloaded into {}."
+        print("Downloaded tag '{}' into {}."
             .format(tag, filepath))
 
     def usage(self):
@@ -134,8 +134,8 @@ class ServersCommand:
             print("{}{}{}:"
                   .format(Fore.MAGENTA, hid, Style.RESET_ALL))
             print(" | OS = {}".format(machine.os))
-            print(" | IP = {}".format(machine.ip))
             print(" | Hostname = {}".format(machine.name))
+            print(" | Free = {:.2f} GB".format(machine.free / 2**30))
 
     def usage(self):
         return "servers"

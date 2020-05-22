@@ -11,20 +11,21 @@ message Share {
 
 message Machine {
     string os = 1;
-    string ip = 2;
-    string name = 3;
+    string name = 2;
+    uint64 free = 3;
 }
 
 enum PacketType {
     STORE_SHARE = 0;
-    RECOVER_SHARE = 1;
-    RETURN_SHARE = 2;
-    NO_SHARE = 3;
-    LIST_TAGS = 4;
-    RETURN_TAGS = 5;
-    NO_TAGS = 6;
-    INFO_MACHINE = 7;
-    RETURN_MACHINE = 8;
+    ACK_STORE_SHARE = 1;
+    RECOVER_SHARE = 2;
+    ACK_RECOVER_SHARE = 3;
+    NAK_RECOVER_SHARE = 4;
+    LIST_TAGS = 5;
+    ACK_LIST_TAGS = 6;
+    NAK_LIST_TAGS = 7;
+    INFO_MACHINE = 8;
+    ACK_INFO_MACHINE = 9;
 }
 
 message Packet {

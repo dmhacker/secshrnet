@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='secshrnet',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"/\n\x07Machine\x12\n\n\x02os\x18\x01 \x01(\t\x12\n\n\x02ip\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\"\xa2\x01\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t\x12#\n\x07machine\x18\x07 \x01(\x0b\x32\x12.secshrnet.Machine*\xa3\x01\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x11\n\rRECOVER_SHARE\x10\x01\x12\x10\n\x0cRETURN_SHARE\x10\x02\x12\x0c\n\x08NO_SHARE\x10\x03\x12\r\n\tLIST_TAGS\x10\x04\x12\x0f\n\x0bRETURN_TAGS\x10\x05\x12\x0b\n\x07NO_TAGS\x10\x06\x12\x10\n\x0cINFO_MACHINE\x10\x07\x12\x12\n\x0eRETURN_MACHINE\x10\x08\x62\x06proto3'
+  serialized_pb=b'\n\rnetwork.proto\x12\tsecshrnet\"V\n\x05Share\x12\r\n\x05index\x18\x01 \x01(\r\x12\x11\n\tkey_share\x18\x02 \x01(\x0c\x12\x12\n\nciphertext\x18\x03 \x01(\x0c\x12\x17\n\x0f\x63iphertext_hash\x18\x04 \x01(\x0c\"1\n\x07Machine\x12\n\n\x02os\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0c\n\x04\x66ree\x18\x03 \x01(\x04\"\xa2\x01\n\x06Packet\x12#\n\x04type\x18\x01 \x01(\x0e\x32\x15.secshrnet.PacketType\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0b\n\x03tag\x18\x04 \x01(\t\x12\x1f\n\x05share\x18\x05 \x01(\x0b\x32\x10.secshrnet.Share\x12\x10\n\x08hex_tags\x18\x06 \x01(\t\x12#\n\x07machine\x18\x07 \x01(\x0b\x32\x12.secshrnet.Machine*\xd0\x01\n\nPacketType\x12\x0f\n\x0bSTORE_SHARE\x10\x00\x12\x13\n\x0f\x41\x43K_STORE_SHARE\x10\x01\x12\x11\n\rRECOVER_SHARE\x10\x02\x12\x15\n\x11\x41\x43K_RECOVER_SHARE\x10\x03\x12\x15\n\x11NAK_RECOVER_SHARE\x10\x04\x12\r\n\tLIST_TAGS\x10\x05\x12\x11\n\rACK_LIST_TAGS\x10\x06\x12\x11\n\rNAK_LIST_TAGS\x10\x07\x12\x10\n\x0cINFO_MACHINE\x10\x08\x12\x14\n\x10\x41\x43K_INFO_MACHINE\x10\tb\x06proto3'
 )
 
 _PACKETTYPE = _descriptor.EnumDescriptor(
@@ -33,55 +33,60 @@ _PACKETTYPE = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RECOVER_SHARE', index=1, number=1,
+      name='ACK_STORE_SHARE', index=1, number=1,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RETURN_SHARE', index=2, number=2,
+      name='RECOVER_SHARE', index=2, number=2,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='NO_SHARE', index=3, number=3,
+      name='ACK_RECOVER_SHARE', index=3, number=3,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='LIST_TAGS', index=4, number=4,
+      name='NAK_RECOVER_SHARE', index=4, number=4,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RETURN_TAGS', index=5, number=5,
+      name='LIST_TAGS', index=5, number=5,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='NO_TAGS', index=6, number=6,
+      name='ACK_LIST_TAGS', index=6, number=6,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='INFO_MACHINE', index=7, number=7,
+      name='NAK_LIST_TAGS', index=7, number=7,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='RETURN_MACHINE', index=8, number=8,
+      name='INFO_MACHINE', index=8, number=8,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='ACK_INFO_MACHINE', index=9, number=9,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=331,
-  serialized_end=494,
+  serialized_start=333,
+  serialized_end=541,
 )
 _sym_db.RegisterEnumDescriptor(_PACKETTYPE)
 
 PacketType = enum_type_wrapper.EnumTypeWrapper(_PACKETTYPE)
 STORE_SHARE = 0
-RECOVER_SHARE = 1
-RETURN_SHARE = 2
-NO_SHARE = 3
-LIST_TAGS = 4
-RETURN_TAGS = 5
-NO_TAGS = 6
-INFO_MACHINE = 7
-RETURN_MACHINE = 8
+ACK_STORE_SHARE = 1
+RECOVER_SHARE = 2
+ACK_RECOVER_SHARE = 3
+NAK_RECOVER_SHARE = 4
+LIST_TAGS = 5
+ACK_LIST_TAGS = 6
+NAK_LIST_TAGS = 7
+INFO_MACHINE = 8
+ACK_INFO_MACHINE = 9
 
 
 
@@ -152,16 +157,16 @@ _MACHINE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='ip', full_name='secshrnet.Machine.ip', index=1,
+      name='name', full_name='secshrnet.Machine.name', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='name', full_name='secshrnet.Machine.name', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
+      name='free', full_name='secshrnet.Machine.free', index=2,
+      number=3, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -178,7 +183,7 @@ _MACHINE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=116,
-  serialized_end=163,
+  serialized_end=165,
 )
 
 
@@ -243,8 +248,8 @@ _PACKET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=166,
-  serialized_end=328,
+  serialized_start=168,
+  serialized_end=330,
 )
 
 _PACKET.fields_by_name['type'].enum_type = _PACKETTYPE
