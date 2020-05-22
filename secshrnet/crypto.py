@@ -1,5 +1,6 @@
 from Crypto.Cipher import AES, ChaCha20_Poly1305
 from Crypto.Random import get_random_bytes
+from Crypto.Protocol.KDF import scrypt
 from Crypto.Protocol.SecretSharing import Shamir
 from Crypto.Hash import BLAKE2s
 from collections import Counter
@@ -11,47 +12,40 @@ class ShareError(Exception):
     pass
 
 
-def encrypt_plaintext(message, key):
+def encrypt_plaintext(message, password):
     '''
     :param bytes message: Plaintext message
-    :param bytes key: 32-byte symmetric key
+    :param bytes password: Password bytes
     :return: Ciphertext result
     :rtype: bytes
     '''
+    salt = get_random_bytes(32)
+    key = scrypt(password, salt, 32, N=2**20, r=8, p=1)
     cipher = ChaCha20_Poly1305.new(key=key)
     ct, tag = cipher.encrypt_and_digest(message)
     # 12 bytes is the default nonce length
     assert(len(cipher.nonce) == 12)
     assert(len(tag) == 16)
-    return cipher.nonce + tag + ct
+    return salt + cipher.nonce + tag + ct
 
 
-def decrypt_ciphertext(ct, key):
+def decrypt_ciphertext(ct, password):
     '''
     :param bytes ct: Ciphertext message
-    :param bytes key: 32-byte symmetric key
+    :param bytes password: Password bytes
     :return: Plaintext result
     :rtype: bytes
     '''
-    nonce = ct[:12]
-    tag = ct[12:28]
-    ct = ct[28:]
+    salt = ct[:32]
+    nonce = ct[32:44]
+    tag = ct[44:60]
+    ct = ct[60:]
+    key = scrypt(password, salt, 32, N=2**20, r=8, p=1)
     cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
     try:
         return cipher.decrypt_and_verify(ct, tag)
     except ValueError:
         return None
-
-
-def hash256(message):
-    '''
-    :param bytes message: Message bytes
-    :return: Digest of the message
-    :rtype: bytes
-    '''
-    hasher = BLAKE2s.new(digest_bits=256)
-    hasher.update(message)
-    return hasher.digest()
 
 
 def split_shares(message, threshold, share_count):
@@ -78,7 +72,9 @@ def split_shares(message, threshold, share_count):
         share.index = raw_share[0]
         share.key_share = raw_share[1]
         share.ciphertext = full_ct
-        share.ciphertext_hash = hash256(full_ct)
+        hasher = BLAKE2s.new(digest_bits=256)
+        hasher.update(message)
+        share.ciphertext_hash = hasher.digest()
         return share
 
     return list(map(_to_protobuf, raw_shares))

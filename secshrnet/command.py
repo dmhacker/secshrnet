@@ -28,7 +28,7 @@ def read_threshold(num_hosts):
 
 def read_password():
     prompt = "{}Password{}: ".format(Fore.YELLOW, Style.RESET_ALL)
-    return crypto.hash256(getpass.getpass(prompt).encode('utf-8'))
+    return getpass.getpass(prompt).encode('utf-8')
 
 
 class SplitCommand:
@@ -50,6 +50,7 @@ class SplitCommand:
         password = read_password()
         with open(filepath, 'rb') as f:
             pt = f.read()
+            print("Encryption may take some time. Please be patient.")
             ct = crypto.encrypt_plaintext(pt, password)
             self.client.split(tag, ct, threshold)
         print("Contents of {} uploaded to tag '{}'."
@@ -78,6 +79,7 @@ class CombineCommand:
             return
         ct = self.client.combine(tag)
         password = read_password()
+        print("Decryption may take some time. Please be patient.")
         pt = crypto.decrypt_ciphertext(ct, password)
         if pt is None:
             raise crypto.ShareError("Incorrect password.")
