@@ -24,8 +24,7 @@ def read_threshold(args, num_servers):
         return None
 
 
-def read_password():
-    prompt = "Password: "
+def read_password(prompt):
     return getpass.getpass(prompt).encode('utf-8')
 
 
@@ -47,7 +46,11 @@ class SaveCommand:
         threshold = read_threshold(args, num_servers)
         if threshold is None:
             return
-        password = read_password()
+        password = read_password("Password: ")
+        check_password = read_password("Re-enter password: ")
+        if password != check_password:
+            print("Passwords do not match.")
+            return
         with open(filepath, 'rb') as f:
             pt = f.read()
             ct = crypto.encrypt_plaintext(pt, password)
@@ -78,7 +81,7 @@ class LoadCommand:
             print("No servers are online.")
             return
         ct = self.client.recombine(tag)
-        password = read_password()
+        password = read_password("Password: ")
         pt = crypto.decrypt_ciphertext(ct, password)
         if pt is None:
             raise crypto.ShareError("Incorrect password.")
