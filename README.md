@@ -22,7 +22,7 @@ pip install secshrnet
 To run a server, use:
 
 ```
-secshrnetd -c <CONFIG> -r <ROOT_DIRECTORY>
+secshrnetd -c <CONFIG_FILE> -r <ROOT_DIRECTORY>
 ```
 
 The root directory specifies where the secshrnet daemon will
@@ -32,17 +32,19 @@ to **$HOME/.secshrnet**.
 The configuration file specifies which Redis instance to connect
 to. Please see [example.conf](https://github.com/dmhacker/secret-sharing-network/blob/master/example.conf) for an example configuration.
 If a configuration file isn't explicitly provided, `secshrnetd`
-will assume the configuration file can be found at the
+will assume the configuration file can be found at
 **secshrnet.conf** in the root directory.
 
 To run a client, use:
 
 ```
-secshrnetc -c <CONFIG>
+secshrnetc -c <CONFIG_FILE>
 ```
 
 This will open up a prompt through which commands can be relayed.
-Use `help` to see available commands.
+Use `help` to see available commands. Again, the configuration
+file will be assumed to be at **$HOME/.secshrnet/secshrnet.conf**
+if not explicitly passed in.
 
 ## Architecture
 
@@ -89,15 +91,11 @@ Host discovery is done via channel pattern matching.
 
 ### Cryptography
 
-File encryption is implemented via usage of the scrypt key derivation 
-function and the ChaCha20-Poly1305 cipher. scrypt is used to derive
-a secret key from a user-inputted password, and ChaCha20-Poly1305 uses
-this secret key to encrypt the contents of the file before it is
-uploaded to the network.
+File encryption is implemented via a combination of the scrypt key 
+derivation function and the ChaCha20-Poly1305 cipher.
 
-With respect to secret sharing, a combination of Shamir's Secret Sharing Scheme
-and the AES-128 cipher is used. A random 16-byte key is generated and is
-then used by AES-128 to encrypt the file. This key is then split using
-Shamir's Secret Sharing Scheme into N shares with at least K shares 
-required to reconstruct the key. Every server then gets a copy of the
-encrypted ciphertext and a share of the key to store.
+Secret sharing is implementing via a combination of Shamir's 
+Secret Sharing Scheme and the AES-128 cipher. Every participating
+server gets a copy of the encrypted ciphertext and a share of a 
+randomly-generated secret key. The secret key is only reproducible
+if enough servers are willing to collaborate in the network.
