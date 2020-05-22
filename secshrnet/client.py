@@ -19,7 +19,7 @@ from . import command
 
 
 def decode_tag(hex_tag):
-    return base64.b16decode(hex_tag.encode()).decode()
+    return base64.b64decode(hex_tag.encode()).decode()
 
 
 class Client(host.Host):

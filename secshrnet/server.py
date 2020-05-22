@@ -17,7 +17,7 @@ IP_EXPIRATION_SECONDS = 3600
 
 
 def encode_tag(raw_tag):
-    return base64.b16encode(raw_tag.encode()).decode()
+    return base64.b64encode(raw_tag.encode()).decode()
 
 
 class Server(host.Host):
