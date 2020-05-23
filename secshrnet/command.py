@@ -98,7 +98,7 @@ class LoadCommand:
 
 
 
-class TagsCommand:
+class ListCommand:
 
     def __init__(self, client):
         self.client = client
@@ -107,7 +107,7 @@ class TagsCommand:
         if len(self.client.servers()) == 0:
             print("No servers are online.")
             return
-        tags = self.client.tags()
+        tags = self.client.list_tags()
         if len(tags) == 0:
             print("No tags found.")
         else:
@@ -116,10 +116,10 @@ class TagsCommand:
                     Fore.MAGENTA, tag, Style.RESET_ALL, count))
 
     def usage(self):
-        return "tags"
+        return "ls"
 
     def description(self):
-        return "Print all tags stored in the network"
+        return "List all tags stored in the network"
 
 
 class ServersCommand:
@@ -140,10 +140,10 @@ class ServersCommand:
             print(" | Free = {:.2f} GB".format(machine.free / 2**30))
 
     def usage(self):
-        return "servers"
+        return "serv"
 
     def description(self):
-        return "Dump information about all active servers"
+        return "Display all active servers"
 
 
 
@@ -163,7 +163,7 @@ class HelpCommand:
         return "help"
 
     def description(self):
-        return "Show all available commands"
+        return "Show available commands"
 
 
 class CommandInterface:
@@ -173,8 +173,8 @@ class CommandInterface:
         self.commands = {
             'save': SaveCommand(client),
             'load': LoadCommand(client),
-            'tags': TagsCommand(client),
-            'servers': ServersCommand(client),
+            'ls': ListCommand(client),
+            'serv': ServersCommand(client),
             'help': HelpCommand(self)
         }
         readline.parse_and_bind('tab: complete')

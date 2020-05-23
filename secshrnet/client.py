@@ -97,7 +97,7 @@ class Client(host.Host):
                   p.type == network_pb2.PacketType.ACK_RECOVER_SHARE]
         return crypto.combine_shares(shares)
 
-    def tags(self):
+    def list_tags(self):
         packet = network_pb2.Packet()
         packet.type = network_pb2.PacketType.LIST_TAGS
         packet.sender = self.hid
