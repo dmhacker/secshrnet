@@ -86,6 +86,7 @@ class Server(host.Host):
             logger.warning("Unknown packet type {} from host {}.".format(
                 packet.type, packet.sender))
 
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def run(self):
         super().run()
         signal.pause()
