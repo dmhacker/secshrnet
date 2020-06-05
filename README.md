@@ -97,11 +97,22 @@ All communication over this network is done over a centralized Redis
 server using Redis's pub/sub interface. Every host subscribes to a 
 unique channel on Redis, and other hosts that want to send message 
 to that host can simply route the packet through the unique channel.
-Host discovery is done via channel pattern matching.
+Host discovery is done via channel pattern matching. Note that a
+host in this context is any participating server or client in the 
+network.
 
-Do note that all Redis traffic is sent through an encrypted
-tunnel, which provides yet another layer of security on top of the
-cryptography that secshrnet already provides.
+The connections from each device to Redis are assumed to be trusted,
+and even in the event that there is a man-in-the-middle, because
+of the various layers of encryption, them obtaining a share is not 
+detrimental to the security of the overall message.
+
+The reason Redis is used as a message broker is so that more devices
+can be connected to the network without any of those devices having
+to expose any ports. Redis channels essentially act as open ports
+through which the hosts on the network can communicate. This reduces
+the network requirements for getting a host operational and eliminates
+the need for a gossiping protocol. Unfortunately, it also means that
+Redis becomes a single point of failure.
 
 ### Cryptography
 
