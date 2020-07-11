@@ -9,11 +9,13 @@ import signal
 import platform
 import time
 import shutil
+import threading
 
 from . import network_pb2
 from . import host
 
-IP_EXPIRATION_SECONDS = 3600
+HEARTBEAT_INTERVAL_SECONDS = 300
+HEARTBEAT_MAX_DELAY_SECONDS = 60
 
 
 def encode_tag(raw_tag):
@@ -26,6 +28,8 @@ class Server(host.Host):
         super().__init__(config, 'secshrnet:server:', 'secshrnet:broadcast')
         self.share_dir = os.path.join(root_dir, 'shares')
         pathlib.Path(self.share_dir).mkdir(parents=True, exist_ok=True)
+        self.heartbeat_flag = False
+        self.heartbeat_cv = threading.Condition()
         logger.add(os.path.join(root_dir, "secshrnetd.log"))
         logger.info("Session host ID is {}.".format(self.hid))
 
@@ -82,13 +86,37 @@ class Server(host.Host):
             logger.info("Reporting machine information to host {}."
                         .format(packet.sender))
             self.send_packet('secshrnet:client:' + packet.sender, response)
+        elif packet.type == network_pb2.PacketType.HEARTBEAT:
+            if packet.sender == self.hid:
+                self.heartbeat_cv.acquire()
+                self.heartbeat_flag = True
+                self.heartbeat_cv.notify()
+                self.heartbeat_cv.release()
         else:
             logger.warning("Unknown packet type {} from host {}.".format(
                 packet.type, packet.sender))
 
+    def _heartbeat(self):
+        logger.info("Heartbeat thread is starting.")
+        while True:
+            packet = network_pb2.Packet()
+            packet.sender = self.hid
+            packet.type = network_pb2.PacketType.HEARTBEAT
+            self.heartbeat_cv.acquire()
+            self.heartbeat_flag = False
+            self.send_packet('secshrnet:server:' + self.hid, packet)
+            self.heartbeat_cv.wait(timeout=HEARTBEAT_MAX_DELAY_SECONDS)
+            reset_connection = not self.heartbeat_flag
+            self.heartbeat_cv.release()
+            if reset_connection:
+                logger.error("Heartbeat failed. Attempting to create a new Redis connection ...")
+                self.reset_redis()
+            time.sleep(HEARTBEAT_INTERVAL_SECONDS)
+
     @logger.catch(onerror=lambda _: sys.exit(1))
     def run(self):
         super().run()
+        threading.Thread(target=self._heartbeat, daemon=True).start()
         signal.pause()
 
 

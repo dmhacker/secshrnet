@@ -26,6 +26,7 @@ enum PacketType {
     NAK_LIST_TAGS = 7;
     INFO_MACHINE = 8;
     ACK_INFO_MACHINE = 9;
+    HEARTBEAT = 10;
 }
 
 message Packet {

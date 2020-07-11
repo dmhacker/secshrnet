@@ -17,16 +17,24 @@ class Host(ABC):
         :param str channel_prefix: Prefix to be prepended to our channel name
         :param configparser.Config config: Redis configuration file
         '''
-        self.redis = redis.Redis(
-            host=config['Redis']['Host'],
-            port=int(config['Redis']['Port']),
-            password=config['Redis']['Password'])
-        self.redis.ping()
+        self.redis_config = config['Redis']
+        self.reset_redis()
         self.pubsub = self.redis.pubsub()
         self.received_packets = queue.Queue()
         self.hid = str(uuid.uuid4())
         self.hchannel = channel_prefix + self.hid
         self.bchannel = channel_broadcast
+
+    def reset_redis(self):
+        '''
+        Reset the Redis connection by replacing the old connection pool
+        object with a new one.
+        '''
+        self.redis = redis.Redis(
+            host=self.redis_config['Host'],
+            port=int(self.redis_config['Port']),
+            password=self.redis_config['Password'])
+        self.redis.ping()
 
     @abstractmethod
     def handle_packet(self, packet):
